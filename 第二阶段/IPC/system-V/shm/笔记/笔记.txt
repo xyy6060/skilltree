@@ -1,0 +1,97 @@
+1.共享内存区原理
+	
+	
+	看图示
+	
+	共享内存的分配和释放只有由一个进程来负责
+	
+2.接口函数
+	获取键值的函数
+	ftok
+	
+	(1)shmget  :用来创建或打开一个共享内存区
+	
+	NAME
+       shmget - allocates a System V shared memory segment
+
+SYNOPSIS
+       #include <sys/ipc.h>
+       #include <sys/shm.h>
+
+       int shmget(key_t key, size_t size, int shmflg);
+			key：ipc对象的键值 
+			size：以字节为单位指定共享内存区的大小
+						实际操作创建一个新的内存区时候，必须是一个不为0的整数
+							size必须是PAGE_SIZE（4K）整数倍
+							
+						实际操作为打开一个已经存在的内存区size == 0
+						
+			shmflg:
+			
+				(1)创建
+					  IPC_CREAT | 权限位
+					  
+					  IPC_EXCL    used with  IPC_CREAT  to  ensure  failure  if  the  segment
+                   already exists.
+				   
+				 (2)
+					打开
+						0
+						
+		
+		返回值：
+			成功返回共享内存区的id
+				失败返回-1，同时errno被设置
+				
+		
+	==============
+		映射共享内存区
+			
+			shmat
+		NAME
+       shmat, shmdt - System V shared memory operations
+
+SYNOPSIS
+       #include <sys/types.h>
+       #include <sys/shm.h>
+
+		shmat是用来映射一个system V 共享内存区到进程地址空间中去
+       void *shmat(int shmid, const void *shmaddr, int shmflg);
+			shmid：共享内存区的id
+			shmaddr:指定要映射到进程地址空间的哪个地址上去
+					
+					NULL  ,让操作系统自行分配
+			shmflg:映射标志
+					（1） SHM_RDONLY 只读
+					（2） 0  表示可读可写
+			
+		返回值：	成功返回映射后的空间的首地址
+					失败返回NULL，同时errno被设置
+			
+		解映射共享内存区
+       int shmdt(const void *shmaddr);
+			shmaddr：用解映射的地址	（shmat的返回值）
+			
+=========
+	删除共享内存区
+		shmctl
+		NAME
+       shmctl - System V shared memory control
+
+SYNOPSIS
+       #include <sys/ipc.h>
+       #include <sys/shm.h>
+
+       int shmctl(int shmid, int cmd, struct shmid_ds *buf);
+			shmid:共享内存区的id
+			cmd：命令号
+				 IPC_RMID  :删除共享内存区
+				 
+			
+	返回值：成功返回0
+			失败返回-1，同时errno被设置
+			
+	   
+
+
+					

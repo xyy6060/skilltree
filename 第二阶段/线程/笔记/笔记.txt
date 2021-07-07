@@ -1,0 +1,446 @@
+1.
+	为了并发执行任务（程序），引入了“进程”的概念
+	
+	分析：
+		（1）进程的地址空间是独立的
+				=》创建一个进程的系统开销比较大，因为要拷贝的父进程的整个地址空间
+				
+		（2）进程的地址空间是独立的，分开的。不能直接进行数据交换
+				需要用到进程间通信（PIPE/FIFO....）,进程间通信的代价比较大
+				
+	在同一个进程地址空间内实现“任务（程序）”的并发执行，引入了“线程”
+	
+2.线程的概念
+	（1）创建一个线程比创建一个进程开销小很多  why?
+				在进程内部创建一个线程，不需要拷贝地址空间
+				进程内部所有的线程共享进程的地址空间
+	（2）实现线程间的通信十分方便，因为进程内部所有的线程共享进程的地址空间
+	
+	（3）线程是一个动态的概念
+			进程内部的一个执行分支，线程是用来在进程内部并发执行指令的
+			C语言中指令只存在于函数内部  =>线程  对应一个函数（线程函数）
+			线程的主要工作就是去执行那个线程函数，线程函数执行完了，线程也就完了
+			
+	（4）在进程内创建多线程，可以提高系统的并行处理能力，加快进程的处理速度
+	
+	（5）进程默认会有一个主线程（main函数），在进程的运行过程，可以创建其他的线程
+	
+	进程  线程
+	
+	进程是系统分配资源的最小单位，调度的最小单位就是线程
+	
+3.Linux下面pthread的接口函数
+	pthread ：POSIX实现了一套线程的机制	  POSIX thread   =>pthread
+	
+	1.创建一个线程  pthread_create
+		创建一个线程  
+				执行哪些指令  =》要执行哪个函数  =》线程函数
+				线程属性
+				
+	在pthread 中 用pthread_t来表示一个线程的id
+		pthread_attr_t 来表示一个线程的属性（分离状态、线程的优先级，....）
+											限制条件
+	
+	NAME
+       pthread_create - create a new thread
+
+SYNOPSIS
+       #include <pthread.h>
+
+       int pthread_create(pthread_t *thread, const pthread_attr_t *attr,
+                          void *(*start_routine) (void *), void *arg);
+		
+		thread：pthread_t指针，用来存储为新创建的线程的id
+		attr：pthread_attr_t指针，用来指定新创建的线程的属性
+					NULL，采用默认属性
+		
+		start_routine：函数指针
+						它所指向的就是新创键的线程要去执行的函数（线程函数）
+						线程函数的类型：带一个void*的参数，返回一个void*的返回值
+							void*XXX(void*X)
+							{
+								
+							}
+				
+		arg:	那个线程函数需要一个参数
+				arg 就是那个线程函数的一个参数，就是你线程执行的时候，实际参数
+				
+				返回值：成功返回0
+						失败返回-1，同时errno被设置
+					
+       Compile and link with -pthread.
+	   
+	注意：一旦你的线程创建成功，那么线程函数自动调用（立即被执行）
+	
+	=========
+		线程退出
+			有三种方式可以使线程结束
+			（1）线程函数返回（执行完毕或遇到return ）
+			（2）调用pthread_exit()
+			（3）被别人取消掉，别的线程调用pthread_cancel
+			
+			pthread_exit():结束调用线程
+			NAME
+       pthread_exit - terminate calling thread
+
+SYNOPSIS
+       #include <pthread.h>
+
+       void pthread_exit(void *retval);
+			retval：线程退出的返回值
+				
+						如线程退出时，无返回值，那么可以填NULL
+			
+       Compile and link with -pthread.
+	   
+		===========
+			pthread_cancel	
+	   AME
+       pthread_cancel - send a cancellation request to a thread
+
+SYNOPSIS
+       #include <pthread.h>
+
+		pthread_cancel是用来“取消”（杀死）那个thread指定的那个线程
+				发送取消请求
+		接收到“取消”请求的线程是否会被取消，取决于线程的一个属性：	cancel state （是否被取消）	
+		
+		我们可以调用 pthread_setcancelstate 来enable/disable这个属性
+			enable =》可以被取消  （默认）
+			disable =》不可以被取消
+			
+			NAME
+       pthread_setcancelstate, pthread_setcanceltype - set cancelability state
+       and type
+
+SYNOPSIS
+       #include <pthread.h>
+			设置线程取消属性
+       int pthread_setcancelstate(int state, int *oldstate);
+			state： PTHREAD_CANCEL_ENABLE  //可取消  （默认）
+					PTHREAD_CANCEL_DISABLE //不可取消
+			
+			oldstate：用来保存先前的状态值
+			
+		返回值：成功返回0
+				失败返回-1，同时errno被设置
+				
+		设置线程取消类型
+       int pthread_setcanceltype(int type, int *oldtype);
+			type：
+					PTHREAD_CANCEL_DEFERRED    延时取消
+					 PTHREAD_CANCEL_ASYNCHRONOUS  立即取消  （默认）
+
+					
+
+       Compile and link with -pthread.
+
+	   =======
+		pthread_cancel是用来“取消”（杀死）那个thread指定的那个线程
+				实际上发送取消请求
+		接收到“取消”请求的线程是否会被取消，取决于线程的一个属性：	cancel state （是否被取消）		
+       int pthread_cancel(pthread_t thread);
+
+       Compile and link with -pthread.
+	   
+
+	在默认的状态下退出之后，会变成僵尸线程
+	
+3. pthread_join 用来等待一个线程退出
+			如果它指定的线程还在运行中，一直阻塞等待
+	NAME
+       pthread_join - join with a terminated thread
+
+SYNOPSIS
+       #include <pthread.h>
+
+       int pthread_join(pthread_t thread, void **retval);
+		thread：线程id,表示你想要等待哪个线程退出
+		retval：二级指针
+				用来保存线程退出的那个返回值的
+		
+		
+       Compile and link with -pthread.
+	   
+	   
+	   返回值：成功返回0
+			  失败返回-1，同时errno被设置
+			  
+	该函数调用会阻塞线程，直到被等待的线程退出或调用出错
+		pthread_join 有两个作用
+			（1）等待线程退出
+			（2）回收被等待线程的资源
+			
+				线程退出，不代表其资源释放了，这就取决于线程的一个属性
+					detach  state
+					
+				 PTHREAD_CREATE_DETACHED  :分离状态
+						属于此状态的线程，在其线程退出后，资源自动释放
+
+				PTHREAD_CREATE_JOINABLE  ：非分离状态  (默认)
+						需要有人等待他退出，并帮他回收资源，资源不会自动释放
+						就需要别的调用pthread_join 函数
+							
+
+			NAME
+       pthread_detach - detach a thread
+
+SYNOPSIS
+       #include <pthread.h>
+		
+		pthread_detach用来设置线程的detach  state
+       int pthread_detach(pthread_t thread);
+
+       Compile and link with -pthread.
+
+			pthread_detach
+			
+		新创建的线程默认是非分离状态	
+	=======
+	NAME
+       pthread_self - obtain ID of the calling thread
+
+SYNOPSIS
+       #include <pthread.h>
+		pthread_self:获取当前线程的线程ID
+       pthread_t pthread_self(void);
+
+       Compile and link with -pthread.
+
+
+==========
+4.线程间的同步机制
+	线程间经常需要访问一些共享资源，为了共享资源的有序访问，防止竞争，需要对共享资源的访问进行保护
+	=》信号量机制
+	
+	（1）信号量机制
+		system v semaphore
+		POSIX 有名信号量
+		POSIX 无名信号量
+		
+	（2）线程互斥锁   sudo apt-get install manpages-posix-dev 
+				线程互斥锁存在于进程地址空间的一种保护设施
+					P/V操作
+					
+		在POSIX thread用类型pthread_mutex_t 来表示一个线程互斥锁（相当于我们想先学过的信号量，只不过存在于进程内部）
+		线程互斥锁只能用于进程的不同线程之间互斥
+		用类型pthread_mutexattr_t 来表示线程互斥锁的属性
+		初始化一个线程互斥锁：pthread_mutex_init
+								
+								
+		P/V操作：       pthread_mutex_lock  加锁  阻塞
+						 pthread_mutex_trylock  加锁  非阻塞
+						 
+						 pthread_mutex_unlock  解锁
+						 
+		销毁一个线程互斥锁：pthread_mutex_destroy
+		
+		
+		==========
+		NAME
+       pthread_mutex_destroy,  pthread_mutex_init  -  destroy and initialize a mutex
+
+SYNOPSIS
+       #include <pthread.h>
+	   pthread_mutex_init：初始化一个线程互斥锁
+		int pthread_mutex_init(pthread_mutex_t *mutex,
+              const pthread_mutexattr_t * attr);
+			  mutex：要初始化的线程互斥锁
+			  attr：线程互斥锁的属性，填NULL，表示采用默认属性
+			  
+			返回值：成功返回0
+					失败返回-1，同时errno被设置
+			  
+		pthread_mutex_destroy：销毁一个线程互斥锁
+       int pthread_mutex_destroy(pthread_mutex_t *mutex);
+			mutex：	指定要销毁的线程互斥锁
+       
+===========
+		P操作:要防止带锁退出
+			
+			NAME
+       pthread_mutex_lock,  pthread_mutex_trylock, pthread_mutex_unlock - lock and unlock a mutex
+
+SYNOPSIS
+       #include <pthread.h>
+
+       int pthread_mutex_lock(pthread_mutex_t *mutex);//加锁  阻塞
+		pthread_mutex_lock阻塞版本，获取了锁返回0，否则等待直到获取锁或出错（返回-1）
+	   
+       int pthread_mutex_trylock(pthread_mutex_t *mutex); //加锁 非阻塞 
+		pthread_mutex_trylock非阻塞版本，能获取则获取立即返回0，不能获取则立即返回-1
+
+============	   
+	   
+	  V操作：
+		pthread_mutex_unlock给线程互斥锁解锁
+		
+       int pthread_mutex_unlock(pthread_mutex_t *mutex);
+
+
+============
+生产者与消费者模型
+	生产者负责 产生 数据
+	消费者负责 消耗 数据
+	
+两个同步问题：
+	供过于求
+	
+	供不应求
+	
+	1.缓冲区是一个共享资源   “互斥问题”
+			信号量、线程互斥锁
+			
+   2.当缓冲区没有数据，消费者线程该怎么办？  同步
+			（1）不停去测试，看有没有数据  =》轮询
+						浪费CPU
+						
+			（2）让出CPU，当数据产生的时候，在唤醒你
+			
+					=》需要用到线程的条件变量
+							条件变量必须跟互斥锁一起使用
+				
+5.线程条件变量
+	线程条件变量用来实现多线程间一种同步的机制
+	在多线程程序设计中国，用条件变量来表示一个“特定的条件”	
+	在一个条件变量上的操作：
+			初始化一个条件变量
+			等待一个条件变量    =》等待条件产生
+			唤醒一个条件变量   =》条件产生了，唤醒在等待条件变量的线程
+			
+			销毁一个条件变量
+			
+	eg:
+		线程A                 线程B  >= 50  
+
+while(1)  				
+{
+	a++;					if(a < 50)
+	if(a >=50)
+		{    				{
+			signal
+		}	
+							    wait
+	sleep(1);					printf("game over\n");
+								
+							}
+}                      
+
+=========
+	pthread中条件变量的类型  ：pthread_cond_t  =>表示条件变量的类型
+				如果你在代码中需要一个变量来表示一个特定的“条件”
+					声明一个 pthread_cond_t的变量
+					
+	PTHREAD_COND_DESTROY(P)    POSIX Programmer's Manual   PTHREAD_COND_DESTROY(P)
+
+NAME
+       pthread_cond_destroy, pthread_cond_init - destroy and initialize condi‐
+       tion variables
+
+SYNOPSIS
+       #include <pthread.h>
+	   
+	   pthread_cond_init用来初始化cond指定的条件变量
+		int pthread_cond_init(pthread_cond_t *cond,
+              const pthread_condattr_t *attr);
+			cond：指针，指向要初始化的条件变量
+			attr：表示条件变量的属性，一般为NULL，采用默认属性
+			  
+			  
+		返回值：成功返回0
+				失败返回-1，同时errno被设置
+				
+		pthread_cond_destroy用来销毁cond指定的条件变量		
+       int pthread_cond_destroy(pthread_cond_t *cond);
+       
+============
+		等待一个条件变量
+		
+	NAME
+       pthread_cond_timedwait, pthread_cond_wait - wait on a condition
+	   
+
+SYNOPSIS
+       #include <pthread.h>
+	   pthread_cond_wait是用来等待cond表示的条件产生
+	   条件变量本身也是一个共享资源，为了避免竞争
+	   需要一个线程互斥锁来保护
+	   在调用pthread_cond_wait之前，必须先把mutex锁住
+	   
+	   pthread_cond_wait/pthread_cond_timedwait需要把互斥锁传入
+	   上述等待函数，在其内部实现时候，在让线程休眠时候，先释放互斥锁，然后休眠
+	   直到被唤醒，被唤醒，再次锁住互斥锁
+	   
+		int pthread_cond_wait(pthread_cond_t *restrict cond,
+              pthread_mutex_t *restrict mutex);
+			  
+			  
+		pthread_cond_timedwait：限时等待
+		
+       int pthread_cond_timedwait(pthread_cond_t *restrict cond,
+              pthread_mutex_t *restrict mutex, const struct timespec *restrict abstime);
+			  
+      
+		struct timespec
+		{
+			time_t tv_sec;;//秒
+			long 	tv_nsec;//纳秒
+		};
+		
+		struct timespec ts;
+		clock_gettime(CLOCK_REALTIME,&ts)//获取当前的实时时间
+		
+	=======
+	唤醒在等待条件变量的线程
+		NAME
+       pthread_cond_broadcast,  pthread_cond_signal  -  broadcast  or signal a
+       condition
+
+SYNOPSIS
+       #include <pthread.h>
+		
+		pthread_cond_broadcast:用来唤醒cond指定的条件变量上的所有线程
+       int pthread_cond_broadcast(pthread_cond_t *cond);
+	   
+	   pthread_cond_signal：用来唤醒cond指定的条件变量上的一个等待线程
+       int pthread_cond_signal(pthread_cond_t *cond);
+	   
+
+	
+作业：
+	同步打印字符   char.c
+		全部变量：int a = 33;
+		
+		thread1      thread2
+		%d   33       %c  !
+		%d   34       %c  #
+		...
+		
+		%d   132
+		
+		
+作业：线程的方式实现一个目录（只考虑目录和普通文件）的拷贝·
+	
+	void cp_file(char*filename1,char*filename2)
+	{
+		
+	}
+	
+	void cp_dir(char*src,char*dest)
+	{
+		opendir(src);
+		while(readdir())
+		{
+			//普通文件
+				文件拷贝 cp_file();
+				
+			//子目录
+			cp_dir();
+		}
+		
+	}
+		
+
+
+	
+			

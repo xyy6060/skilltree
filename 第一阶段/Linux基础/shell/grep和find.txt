@@ -1,0 +1,120 @@
+grep(egrep)  :用来在一个文本文件中查找一个特定的字符串
+	egrep:用扩展的正则表达式
+	
+	语法：
+		grep [options]  [正则表达式]  字符串   files
+		
+		在file列出的文件中，查找以 “正则表达式”所描述的字符串
+		
+		options：
+			-n  显示查找的字符串所在的行号
+			-E  用用扩展的正则表达式
+			
+			grep -E
+			
+			=>egrep
+			
+			-i 在字符串查找时 忽略大小写
+			-num  表示同时显示匹配的上下num行
+			-c  打印每个文件里匹配行的个数
+			
+				--color=always   总是高亮显示
+				--color=never	不高亮显示
+				--color=auto    自动
+				
+			-H   显示文件名
+			-h   不显示文件名
+			
+============
+find :用于在一个目录下递归查找文件
+
+	   find [path...] [options]
+	   
+	 options:
+		-name  pattern 指定要查找的文件的名字。可以用通配符
+		
+			*  代表0个或多个任意字符
+			？ 代表一个任意字符
+			
+			find ./ -name "*.c"   在当前路径下查找名字以.c结尾的文件
+			
+			find ./ -name "?.c"
+			
+			
+		-regex pattern  以正则表达式的方式指定要查找的文件名
+		
+		-type  b / c /d /p / f/l/s  指定要搜索的文件的类型
+		
+			eg:  find . -name "*.c" -type f	
+			
+		-size n[cwbkGM]
+				4*512  =>4b
+				
+			b  :单位为块   a block(512bytes)
+			c  ：单位为字节
+			w  :单位为字   2bytes
+			k  :单位为k   1024
+			M  :单位为M    
+			G   :单位为G  
+			
+			-size +3c   +  查找大于
+						-   查找小于
+			
+			
+		-perm mode 要查找的文件的权限
+			-mode 所有的权限为必须要匹配
+			
+				-perm -0664   待查找的文件权限必须是0664
+	
+			/mode  只要匹配一位就可以
+			
+				-perm /0111   待查找的文件权限只要有可执行就可以
+				
+		-newer file  比file更新
+			待查找的文件的修改时间在file这个文件的后面
+			
+		-amin n	
+				+n :n分钟之前被访问的文件
+				-n :n分钟以内被访问的文件
+					
+		-atime n	
+				+n :n天之前被访问的文件
+				-n :n天以内被访问的文件	
+				
+		-cmin n	
+				+n :n分钟之前创建的文件
+				-n :n分钟以内创建的文件
+					
+		-ctime n	
+				+n :n天之前创建的文件
+				-n :n天以内创建的文件	
+				
+		
+		-mmin n	
+				+n :n分钟之前文件内容被修改
+				-n :n分钟以内文件内容被修改
+					
+		-mtime n	
+				+n :n天之前文件内容被修改
+				-n :n天以内文件内容被修改
+				
+		-delete  删除所找到的文件
+		
+		-exec command {} \;
+			每找到一个文件就会执行 command这个命令
+			{} 代表找到的文件名
+			
+		eg:
+			find -name "*.c" -exec date {} \;
+			
+		-exec command {} +
+			所有文件查找完之后，执行command这个命令
+			{} + 代表所有找到的文件名（以空格隔开）
+			
+			
+			
+			
+			
+			
+				
+				

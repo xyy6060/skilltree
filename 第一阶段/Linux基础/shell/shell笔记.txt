@@ -1,0 +1,512 @@
+shell
+	
+	#！ ：指定解释器， 若不加就表示用默认解释器
+	shell脚本中 注释  #号开头
+	shell脚本中 相当就是多条命令的集合，外加shell脚本文件的语法
+	cat /etc/shells  查看当前系统下的shell
+	echo $SHELL 查看当前使用的shell
+	
+1.shell变量
+	shell 变量没有类型的概念，全部都是字符串
+	shell 变量不需定义，直接用或者直接赋值
+	
+	变量名=值   （等号两边不能有空格）
+	
+	
+	引用变量 ：$变量名   ${变量名}
+	
+		eg:
+			myname="pxl"
+			echo $myname
+			
+2.shell变量有四种
+	(1)自定义变量
+			
+			当变量内容带有特殊字符（如空格）需要加上单引号
+			myname=px l  
+			
+			如果变量内容中需要用到其他的命令的运行结果，需要用到反撇号
+			DATE=`date`
+			
+			当变量内容需要加上其他变量的内容需要加上双引号
+			myname="pxl"
+			echo $myname
+			
+			name="$myname fdyefuy"
+			
+	(2)位置变量（传递给脚本的参数或传递给函数的参数）
+		./1.sh 123 abc
+		
+		在shell脚本中或shell参数里面
+		$0   ->表示第0个参数，命令行程序名
+		
+		$1....$9  表示第一个到第九个参数的名字
+		
+		$#  表示命令行参数（不包括脚本名）的个数
+		$@  包含所有的命令行参数  $@  <=>"$1" "$2" "$3"....
+		$*  包含所有的命令行参数  $@  <=>"$1C$2C$3...."
+		
+			C :内部域分隔符，默认是空格，tab,换行符
+			
+		$?  表示前面一个命令的退出码（返回值，进程的退出值）
+		
+		
+	(3)shell环境变量
+		HOME : 用户主目录的路径
+		PATH  :用户或可执行程序的搜索路径
+		LD_LIBRARY_PATH :动态库的搜索路径
+		....
+		
+	(4)特殊变量
+		
+
+3.shell数组
+	数组名[下标]=value,下标从0,1,2,....n-1
+	
+	引用数组 :引用整个数组
+		${数组名[*]}
+		${数组名[@]}
+		
+	引用数组元素：
+		${数组名[下标]}
+		
+		${数组名}  $数组名  =》在bash /dash 引用的是数组中的第一个元素
+		
+	eg:
+		a[1]=11
+		a[2]=12
+		a[3]=13
+		
+		echo ${a[1]},${a[2]}  =>11,12
+		echo ${a[1]}:${a[2]}  =>11:12
+		echo ${a[*]}  =>11 12 13
+		
+		b=(aa bb cc)
+		
+		echo ${#b[@]}  =>3
+		
+		echo ${#b[0]}  =>2
+		
+4.shell程序的语句
+	4.1 说明性语句（注释）
+		以#开头的行
+		
+	4.2 功能性语句
+		任意的操作系统的命令（echo ,ls,date...）,shell内部命令，自编程序
+		
+			read :在shell中表示从终端获取输入
+			
+				eg:
+					read v1 v2
+						从终端获取两个字符串，依次保存在v1,v2中
+						
+					"以空格隔开"
+					
+			
+			重定向问题：标准输入  标准输出  标准出错
+				（1）输入重定向
+				命令的输入通常来源于输入设备，就可以它转向一个文件来代替
+				就叫做输入重定向。在命令后添加 < filename
+				该命令所有的输入请求来自于这个filename
+				
+				read v1 v2 < 2.txt	
+				read v1 v2 < $1
+			
+				（2）输出重定向
+					命令的输出通常提交到标准的输出设备（终端），就可以它转向一个文件来代替
+				就叫做输出重定向。在命令后添加 > (>> 追加) filename
+				该命令所有的输出全部写入到文件中
+				
+					echo $v1 > $1
+					
+					./1 >> 1.txt
+					
+				(3)标准出错重定向
+					除了标准输入和输出设备外，还有一个标准出错设备
+					linux 命令把大部分的出错信息全部写到标准出错设备（终端）
+					
+					./1 2> (>> 追加) filename
+					
+			expr :算术运算命令  主要用于简单的整数运行
+					+   -  \*  /  %
+					
+				expr 5 + 3  （操作数与运算符之间至少需要一个空格）
+		
+				re=`expr 5 + 3`
+				echo $re
+				
+			eg:
+				i=6
+				re=`expr $i + 3 \* 4`
+				echo $re
+				
+				
+			test :test语句可以测试三种对象 ：字符串  整数  文件
+				test命令指执行返回0，表示true
+				
+				字符串测试
+					=  测试字符串的内容是否完全一样
+					
+					eg:
+						test "abc" = "abc"  //相等返回0
+						echo $?
+						
+					!=  测试字符串的内容是否不相同
+					
+					eg:
+						test "abc" != "aabc"  //不相等返回0
+						echo $?	
+						
+					-z  zero 测试字符串是否为空
+					
+					eg ： test -z ""  //为空返回0
+							echo $?	
+							
+					-n  null  测试字符串是否不为空
+							
+						eg: test -n "abc"  //不为空返回0
+							echo $?
+							
+					eg:
+					
+					str=
+					test -z $str
+					echo $?
+							
+				整数测试
+					a -eq b   测试两个整数是否相等 ==
+					
+					eg:
+						test 3 -eq 4   =>1
+						
+						i=1
+						test $i -eq 4  =>1
+						
+					a -ne b  测试两个整数是否不相等 !=
+					
+					a -gt b  测试a是否大于b  >
+					
+					a -ge b  测试a是否大于等于b  >=
+					
+					a -lt b  测试a是否小于b   <
+		
+					a -le b  测试a是否小于等于b  <=
+					
+			文件测试
+				-d  filename   测试filename是否为一个目录
+				
+					eg ；
+						test -d $1
+						
+				-f  filename  测试filename是否为一个普通文件（file）
+				-L  filename  测试filename是否为一个符号链接文件（Link）  
+				
+				-r  filename 测试filename是否存在并可读
+				-w  filename 测试filename是否存在并可写
+				-x  filename 测试filename是否存在并可执行
+				
+				-s  filename 测试filename是否存在并且长度不为0（size）
+				
+				f1 -nt f2  测试f1比f2更新
+						
+							f1是否在f2后面修改过
+							
+				f1 -ot f2  测试f1比f2更旧
+			
+			test命令简写  []
+			test expersion   =>[ expersion ]
+			
+			[ 2 -eq 4 ]
+			
+			test的复合表达式 ：组合了两个或两个以上的表达式
+			可以使用test内置的操作符  可以使用条件操作符
+			
+			（1）使用test内置的操作符来创建复合表达式
+				test expersion1  操作符  expersion2
+					
+				操作符：
+					-a   and
+					-o    or
+					
+				eg:
+					test -f $1 -a $1 -nt ${f2}
+					
+			(2)	使用条件操作符 （&& ，|| ，！）
+				test expersion1  操作符  expersion2
+				
+				操作符:&& ，|| ，！
+				
+				eg:
+					test -f $1 && $1 -nt ${f2}	
+			
+	4.3 结构性语句（分支语句，循环语句）
+		条件语句
+			if command ;then
+				......语句列表
+			
+			else//可要可不要
+				....
+			fi
+			
+			eg:
+				if [ -f $1 ] ;then
+					echo "YES"
+				else
+					echo "NO"
+				fi
+				
+			多路分支
+			
+			case 字符串变量  in
+				模式1)
+					.....//语句
+					;;  //相当与C语言中的break，但是在shell中 ;; 一定要加
+				
+				模式2)
+					.....//语句
+					;;  
+				....
+				模式n)
+					.....//语句
+					;;  
+			esac
+				
+				case 语句真正的功能强大之处在于使用模式而不是一个固定的字符串
+					模式可以由一串正规的字符串和特殊的通配符组成的字符串
+					
+					*  shell通配符  代表任意多个（也可以是0个）字符
+					
+					?  shell通配符  代表一个任意字符
+			
+			eg:
+				
+				case $1  in
+				*.c)
+					echo "C code file"
+					;;  //相当与C语言中的break，但是在shell中 ;; 一定要加
+				*.h)
+					echo "header file"
+					;;  
+				*.cpp)
+					echo "cpp code file"
+					;;  
+				esac
+				
+		循环语句
+			（1）for 变量名 in 单词表
+			do
+				......//循环体语句
+				
+			done
+			
+				“单词表”  以空白字符隔开的字符串列表
+						a b c ddd
+						
+						for指向的次数就是“单词表”的单词的个数
+						并且每次执行的时候 “变量”的值就取下一个单词的值 
+						
+			eg:
+				NUM="a b c ddd"
+				for var in $NUM
+				do
+					echo $var
+					
+				done
+				
+					=> a
+					   a
+					   c
+					   ddd
+				
+			
+			for可以写成C风格相同的for循环
+			写一个shell脚本，求1~100的和
+			
+				sum=0
+				for (( i=1; i<=100 ; i=$i+1 ))
+				do
+					sum=`expr $sum + $i`
+				done
+				
+				echo "sum = $sum"
+				
+		块注释		
+		:<<BLOCK
+	
+		BLOCK
+		============
+			（2）while 命令或表达式
+				do
+					....//循环体语句
+					
+				done
+				
+			写一个脚本计算一个文件中有多少行
+			l=0
+			while read var 
+			do
+				l=`expr $l + 1`
+			done < $1
+			
+			echo $l
+			
+		==============
+		(3) until  命令或表达式
+			do
+				....//循环体语句
+					
+			done
+			
+				until与while功能相似，，所不同的是测试的命令或表达式的值为假，才执行
+					循环体中的命令列表
+					
+				条件成立，退出循环
+				
+			eg :
+				i=1
+				sum=0
+				until  [ $i -gt 100 ]
+				do
+					sum=`expr $sum + $i`
+					i=`expr $i + 1`
+						
+				done
+				
+		
+
+		break 和 continue
+			break n  跳出第n层循环
+			
+			continue n  转到最近n层循环语句执行下一轮循环
+			
+			break,continue后面可以不加n ,表示当前循环
+			
+			练习：
+				判断一个数是不是质数
+				
+				read n
+				i=2
+				while [ $i -lt $n ]
+				do
+					 re=`expr $n % $i`
+					 if [ $re -eq 0 ] ;then
+						echo "no"
+						break
+					 else
+						i=`expr $i + 1`
+					 fi
+				done
+				
+				if [ $i -eq $n ] ;then
+					echo "yes"
+				fi
+				
+				
+	============
+	shell函数
+	
+	function_name()
+	{
+		....
+	}
+	
+	函数调用：
+		function_name  arg1 arg2 arg3 ....
+			在函数内部  =》
+				arg1  =>$1
+				arg2  =>$2	
+				...
+				
+	获取函数的返回值，有两种方式
+		（1） ret=`function_name  arg1 arg2 arg3`
+				``执行函数function_name时的标准输出内容
+				
+		（2）function_name  arg1 arg2 arg3
+				ret=$?
+				
+				function_name最后一个命令或表达式的返回值（最后用return 语句返回的值）
+
+		eg:
+			求两个整数的和
+			
+			sum()
+			{
+				sum=`expr $1 + $2`
+				
+				echo $sum
+			}
+			#ret=`sum 1 2`
+			#echo $ret
+			
+			sum 1 2
+			echo $?
+			===============
+			sum()
+			{
+				sum=`expr $1 + $2`
+				
+				return $sum
+			}
+			#ret=`sum 1 2`
+			#echo $ret
+			
+			sum 1 2
+			echo $?
+					
+
+1.写一个shell脚本，打印100以内的质数
+
+2.有一个学生成绩文件，内容如下：
+llll  89
+lisi  65
+zhangsan 96
+wangwu 78
+llll  78
+lisi  55
+zhangsan 88
+wangwu 33
+
+
+
+要求输出格式
+	name      average        tatal
+	llll       XXXX           XXXX    
+	
+	num=0
+	while read name score
+	do
+		i=0
+		while [ $i -lt $num ]
+		do
+			if [ "${names[$i]}" = "$name" ] ; then
+				break
+			fi
+			i=`expr $i + 1`
+		done
+		
+		scores[$i]=`expr ${scores[$i] + $score}`
+		courses[$i]=`expr ${courses[$i]} + 1`
+		
+		if [ $i -eq $num ] ; then
+			names[$num]=$name
+			num=`expr $num + 1`
+			
+		fi
+		
+	done < $1
+	
+	
+	
+
+	
+	
+	
+	
+	
+				
+				
+				
+					
+				
+		
+	

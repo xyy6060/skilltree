@@ -1,0 +1,21 @@
+线程池（thread pool）
+	线程池是一种多线程的处理方式，处理过程中将任务添加到队列上，然后在创建线程后自动启动这些任务
+	
+	注意：
+		（1）任务队列上开始是没有任务的，只有一个头结点的空链式队列
+		（2）使用互斥锁来保护这个队列
+		（3）使用条件变量来代表任务队列中任务个数的变化
+		（4）通过公共开关--shutdown 来控制线程的退出，进而销毁整个线程池
+		
+	函数接口：
+		（1）初始化线程池
+			bool init_pool(struct thread_pool*pool,int tnread_num);
+			
+			
+		（2）往线程池中投放任务
+			bool add_task(struct thread_pool*pool,void*(*do_task)(void*),void*arg);
+			
+		（3）销毁线程池
+			bool destroy_pool(struct thread_pool*pool);
+			
+			

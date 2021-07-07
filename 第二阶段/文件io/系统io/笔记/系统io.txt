@@ -1,0 +1,297 @@
+系统io
+1.	Linux系统提供给应用程序操作文件的接口
+			一切皆文件
+			
+	文件描述符 :进程文件表项的下标
+	
+	所有打开的文件都是通过文件描述符来引用，
+	文件描述符在Linux下唯一表示一个已经打开的文件。后序所有对文件的操作都是通过文件描述符
+	
+	Linux会为每一个进程，自动打开三个文件
+	标准输入文件 ：STDIN_FILENO (0)
+	标准输出文件 ：STDOUT_FILENO (1)
+	标准出错文件 ：STDERR_FILENO (2)
+	
+2.linux 系统io的API接口	
+	2.1 打开或关闭一个文件
+		open
+		close
+		
+		NAME
+       open  open and possibly create a file or device
+
+SYNOPSIS
+       #include <sys/types.h>
+       #include <sys/stat.h>
+       #include <fcntl.h>
+
+		open用来打开或创建一个文件
+       int open(const char *pathname, int flags);
+       int open(const char *pathname, int flags, mode_t mode);
+	   
+	   pathname:要打开或创建的文件名（带路径）
+	   flags:打开标志。标志位，用位域实现（某个标志位实际上就是某个bit位）
+			以下标志必须三选一
+				 O_RDONLY  只读
+				 O_WRONLY  只写
+				 O_RDWR    读写
+			
+		 O_APPEND ：追加方式
+		 O_CREAT  ：文件不存在则创建
+		 O_EXCL   :该标志位一般和O_CREAT配合是用，来用测试文件是否存在
+					假设 ：O_CREAT|O_EXCL,如果文件存在就会打开失败，并且设备errno = EEXIST
+					
+		  O_NONBLOCK ：非阻塞方式打开
+					
+				非阻塞：如果文件中没有内容，则read直接报错
+						如果文件中没有空间，则write直接报错
+		 
+				阻塞：如果文件中没有内容，则read阻塞（等待直到有数据）
+						如果文件中没有空间，则write阻塞（等待直到有空间）
+
+		 O_TRUNC：截短标志
+				假如文件存在，并且是一个普通文件，而且打开方式是 O_RDWR or O_WRONLY
+					则会清空文件内容
+					
+				O_TRUNC | O_RDONLY  =》	O_TRUNC不会起作用
+	
+				
+			
+	   mode：当创建文件时候，才需要第三个参数，如果不是创建文件，第三个参数会被忽略
+	   
+		（1）宏
+			  S_IRWXU  00700 user (file owner) has  read,  write  and  execute
+                       permission
+
+              S_IRUSR  00400 user has read permission
+
+              S_IWUSR  00200 user has write permission
+
+              S_IXUSR  00100 user has execute permission
+
+              S_IRWXG  00070 group has read, write and execute permission
+
+              S_IRGRP  00040 group has read permission
+
+              S_IWGRP  00020 group has write permission
+
+              S_IXGRP  00010 group has execute permission
+
+              S_IRWXO  00007 others have read, write and execute permission
+
+              S_IROTH  00004 others have read permission
+
+              S_IWOTH  00002 others have write permission
+
+			  S_IXOTH  00001 others have execute permission
+
+		eg:
+				指定用户可读可写其他都可读
+				
+				S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH
+	   
+		（2）八进制
+			110100100
+		eg:
+			0644
+			
+			指定的文件的权限，要和运行这个程序的用户的权限相匹配
+	返回值：
+			成功return the new file descriptor (>=0)
+			失败返回-1，同时errno被设置
+
+============
+	NAME
+       close - close a file descriptor
+
+SYNOPSIS
+       #include <unistd.h>
+		close 关闭一个文件描述符
+       int close(int fd);
+	   
+==========
+	2.2读写文件
+		read/write
+		
+NAME
+       read - read from a file descriptor
+
+SYNOPSIS
+       #include <unistd.h>
+		read是用来从fd指定的文件中，读取count个字节存到buf指定的内存空间中
+       ssize_t read(int fd, void *buf, size_t count);
+		fd:文件描述符 ，指定要从哪个文件中读取数据
+		buf:指向一块内存空间，表示要把数据存到哪
+		count:表示要读多少个字节
+		
+		
+		返回值：
+			成功 返回实际读到的字节数 （>0 && <= count）
+					返回值 = 0，表示读到文件末尾
+					
+			失败返回-1，同时errno被设置
+				
+		=========
+		
+		NAME
+       write - write to a file descriptor
+
+SYNOPSIS
+       #include <unistd.h>
+		write是用来把buf所指向的内存空间中前面count个字节的数据，写到fd指定的文件中
+       ssize_t write(int fd, const void *buf, size_t count);
+		fd:文件描述符 ，指定要写到哪个文件中
+		buf:指向一块内存空间，表示存到要写入的数据
+		count:表示要写多少个字节
+		
+		
+		返回值：成功返回实际写入到文件中的字节数
+				返回值 = 0 ，表示什么都没有写
+				
+				失败返回-1，同时errno被设置
+				
+	
+	eg:利用系统io来实现两个文件的拷贝，文件名由命令行传入
+		
+		int main(int argc,char**argv)
+		{
+			 int fd1 = open(argv[1],O_RDWR);
+			 int fd2 = open(argv[2],O_RDWR | O_CREAT | O_TRUNC,0777);
+			 if(fd1 == -1 || fd2 == -1)
+			 {
+				perror("open error:");
+				return -1;
+			 }
+			 
+			 char s[4];
+			 while(1)
+			 {
+				ssize_t r = read(fd1,s,4);
+				if(r == 0)
+				{
+					break;
+				}
+				else if(r == -1)
+				{
+					perror("read error");
+					break;
+				}
+				write(fd2,s,r);
+			 }
+			 
+			 
+			 close(fd1);
+			 close(fd2);
+		}
+
+
+==========
+在读写文件之前，先定位光标。
+	lseek
+	
+	NAME
+       lseek - reposition read/write file offset
+
+SYNOPSIS
+       #include <sys/types.h>
+       #include <unistd.h>
+
+		lseek使用给fd指定的文件定位光标
+       off_t lseek(int fd, off_t offset, int whence);
+		fd ：文件描述符，要给哪个文件定位
+		offset:文件偏移量
+		whence：基准方式
+			 SEEK_SET ：基于文件开头开始定位
+            新的光标位置 = 文件开头 +offset(>=0)
+
+			SEEK_CUR :基于当前光标定位
+				新的光标位置 = 当前光标位置 +offset(可正可负)
+
+
+			SEEK_END ：基于文件末尾定位
+              新的光标位置 = 文件末尾 +offset(可正可负)
+
+		返回值：成功返回新光标位置距离文件开头的偏移量（以字节为单位）
+				失败返回-1，同时errno被设置
+				
+		eg:求一个文件大小
+			off_t l = lseek(fd,0,SEEK_END);
+	
+	   作业：
+		1. mmap 和 munmap
+		
+		2. 写一个程序，解析一个bmp文件，打印出给定的bmp文件的信息
+				（1）是不是一个bmp文件
+				（2）如果是一个bmp文件
+						这个bmp文件的分辨率
+						这个bmp文件的大小是多少个字节
+						这个bmp文件每个像素点占多少个字节  
+						这个bmp文件像素数组的起始位置   //54
+						
+						
+======================
+	mmap和munmap
+	我们在读写一个文件时候，实际上把文件的内容拷贝到内存，或者是把内存的内容拷贝到硬盘。
+	能不能把文件的内容直接映射到用户的地址空间，操作这个空间，就相当于操作这个文件
+	
+	mmap
+	NAME
+       mmap, munmap - map or unmap files or devices into memory
+
+SYNOPSIS
+       #include <sys/mman.h>
+		mmap：把一个文件的内容映射到一个进程的地址空间中
+       void *mmap(void *addr, size_t length, int prot, int flags,
+                  int fd, off_t offset);
+				  
+		addr：映射地址，表示要把文件内容映射到进程的哪个地址中去
+				一般为NULL，表示让操作系统自行无分配一个地址
+				
+		length:要映射的文件内容的长度，
+				向上取PAGE_SIZE（4096）整数倍，在内存中，以页为单位
+				
+		prot：映射区域的权限（应该与打开文件的权限一样，因为操作此区域内存就是在操作文件的内容）
+			 PROT_EXEC  可执行
+
+			PROT_READ  可读
+
+			PROT_WRITE 可写
+
+			PROT_NONE  没有访问权限
+			
+			注意：用位域实现
+			
+		flags：映射标志。决定映射部分的操作是否对其他的进程可见
+			     MAP_SHARED ：共享映射，对其他进程可见。内存操作直接应用到文件中
+						
+
+				MAP_PRIVATE ：私有映射，对其他进程不可见。内存操作不会应用到文件中
+                 
+		fd：文件描述符，表示要映射哪个文件
+		
+		
+		offset:文件偏移量，表示要从哪个位置开始映射
+				offset必须是PAGE_SIZE（4096）整数倍
+					
+				在内存中，以页为单位，而且内存地址是以页对齐（必须是4k的整数倍）
+
+		返回值：成功返回映射后那段内存空间的首地址
+				失败返回 MAP_FAILED ，同时errno被设置
+		
+		
+		解映射
+       int munmap(void *addr, size_t length);
+		addr：要解映射的地址，mmap返回的地址
+		length：要映射的空间的长度
+		
+			返回值：成功返回0，
+					失败返回-1，同时errno被设置
+					
+					
+		eg；
+			打开一个1.txt文件，通过映射将它的内容改为hello world
+			
+			
+			
+	
+	

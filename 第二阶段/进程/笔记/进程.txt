@@ -1,0 +1,393 @@
+进程：
+1.	什么是进程？
+	
+		正在运行中的程序
+	
+	程序？
+		数据：数据是人们思维对象的抽象概念的物理表现
+		
+			数据处理的规则叫做操作  =》指令
+			
+		计算：对某一有限的数据集合所实施的，目的在于解决某一问题的一组有限
+			操作的集合，称为计算
+			
+		程序 ：就是数据与指令的集合（数据结构+算法）
+			 一个程序的执行过程就是一次计算
+			 
+
+2.程序的执行方式
+	1.顺序执行
+		I ：输入
+		C :计算
+		P :输出
+		
+		顺序执行的缺点：
+			CPU的利用率很低
+		
+	2.并发执行
+		并发执行就是同时有多个程序在运行，特定引入了“进程”的概念
+		
+		
+3.进程：进程就是程序关于某一个数据集合的一次计算过程
+
+
+4.程序与进程的区别：
+	（1）程序是数据与指令的集合  ，静态概念
+			进程是程序的一次执行过程，是动态概念
+			
+	（2）进程就是程序关于某一个数据集合的一次计算过程
+			一个程序可以对应多个进程，但是一个进程只对应一个程序
+			
+	（3）进程是一个独立运行的活动单位
+			是操作系统分配资源的最小单位
+			
+		进程与程序到底是什么？
+		
+		
+		进程是为了解决程序的并发而引人的概念
+		
+5.进程的状态
+	进程的状态就是在运行中有不同的状态
+	给进程在不用的运行阶段不同的状态就可以实现进程并发
+	
+	
+	进程中包含有数据和指令，在进程执行过程中这些数据是如何存储的？
+	
+6.进程的地址空间
+	Linux对进程的数据是分区域保存
+	
+	
+	.data  
+		用于保存初始化的全局变量和初始化的static变量
+		属性:可读可写，生存周期是随进程的持续性
+		
+	.bss
+		用于保存未初始化的全局变量和未初始化的static变量
+		属性:可读可写，生存周期是随进程的持续性
+		
+	.rodata
+		存储只读数据
+		属性 ：只读
+		
+	.text
+		代码段 用来保存只读的指令数据
+		属性：只读
+		
+	栈：
+		用来保存局部变量
+		属性：可读可写，资源自动回收
+		
+	堆：
+		用来保存动态分配的空间 (malloc/realloc/calloc)
+		属性：可读可写，资源手动回收，生存周期是随进程的持续性
+		
+7. linux 下雨进程相关的函数
+	（1）创建一个新的进程
+		fork
+		
+		NAME
+       fork - create a child process
+		fork是用来创建一个新的进程，我们就将原来的进程称为父进程
+			新进程称为子进程
+SYNOPSIS
+       #include <unistd.h>
+
+       pid_t fork(void);
+	   pid_t  是一个long int型数据
+	   
+	   返回值：
+			>0   父进程，返回的是子进程的进程号（pid）
+			==0  子进程
+			==-1  创建失败，同时errno被设置
+			
+	注意：函数执行成功之后就会产生一个新的子进程
+		新的子进程它的返回值为0
+		原来的父进程是一个大于0的正整数，其实就是子进程的进程号
+		
+	子进程的数据和指令都是从父进程拷贝来的
+			=》子进程拷贝的父进程的整个地址空间 包括栈，堆，数据段，代码段，标准io的缓冲区等等
+			
+	fork完了之后就有两个进程这两个进程是相互独立的
+	
+	父子进程：
+		相同：
+			（1）所有的环境变量
+			（2）进程组ID
+			（3）当前的工作路径  getcwd
+			（4）整个内存空间，包括栈，堆，数据段，代码段，标准io的缓冲区等等
+			
+		不同：
+			（1）进程PID
+			（2）挂起的信号
+			（3）记录锁，父进程把某种文件加了一个锁，子进程不会继承到这把锁
+			
+
+	(2)每个进程都有一个唯一的进程号
+		getpid /getppid
+		
+		NAME
+       getpid, getppid - get process identification
+
+SYNOPSIS
+       #include <sys/types.h>
+       #include <unistd.h>
+
+		getpid是获取当前进程的PID
+       pid_t getpid(void);
+		返回值就是获取的进程号
+		
+		getppid是获取当前进程的父进程的PID
+       pid_t getppid(void);
+		返回值就是获取的父进程的的进程号
+		
+	(3)	进程的退出
+		进程的退出有两种方式
+		（1）自杀
+			1.main函数执行完毕
+					main函数退出，表示整个进程执行完毕
+					
+			2.在进程指向的任意时刻调用
+				exit() /_exit() ,退出时传递退出值
+				
+			NAME
+       exit - cause normal process termination
+
+SYNOPSIS
+       #include <stdlib.h>
+
+       void exit(int status);
+	   status:表示退出码，表示退出状态
+				若进程正常退出，一般为0
+				若进程异常退出，一般给非0
+				
+	正常退出，做一些清理工作，把缓冲区的东西，同步到文件中
+
+		
+		NAME
+       exit, _Exit, _exit - terminate a process
+
+SYNOPSIS
+	   
+		#include <unistd.h>
+       void _exit(int status);
+		 status:表示退出码，表示退出状态
+			立马中止进程，不会做任何的清理工作
+			
+			
+	int main()
+	{
+		printf("fhioerfhoire");
+		
+		
+		_exit(-1);
+		
+		printf("reioghoi\n");
+	}
+	
+	(2)他杀
+		被操作系统杀死
+		
+	
+	（3）等待子进程退出
+		wait
+		waitpid
+		
+		NAME
+       wait, waitpid - wait for a child process to stop or terminate
+
+SYNOPSIS
+       #include <sys/wait.h>
+
+       pid_t wait(int *stat_loc);
+       pid_t waitpid(pid_t pid, int *stat_loc, int options);
+	   
+	   
+	   这两个函数都是用来等到某些（个）子进程的状态发生改变，等待的状态改变有三种情况
+	   （1）子进程退出（正常） ：main函数返回/exit/_exit
+	   （2）子进程被信号中止
+	   （3）子进程被信号唤醒
+	   
+	   在子进程正常退出（1）的情况下，调用wait可以释放子进程的资源，假如没有调用wait
+	   那么子进程就会变成僵尸进程
+	   
+	   假如子进程的状态已经发生改变，那么调用wait()/waitpid()就会立马返回
+	   否则会阻塞到调用进程直到某个子进程状态发生改变或被信号中止
+	   
+	   wait用来等待任意一个子进程退出
+	    pid_t wait(int *stat_loc);
+	   
+	   stat_loc：用来保存子进程的退出信息（怎么死的，退出码...）
+	   
+	   返回值：成功返回退出的子进程的ID
+				失败返回-1，同时errno被设置
+				
+		stat_loc是用来保存退出的子进程的状态信息，状态信息是存在一个整数里面
+		
+		
+		WIFEXITED(stat_val)   return true  假如子进程正常退出（main函数返回/exit()/_exit()） 
+		
+		WEXITSTATUS(stat_val) 
+					返回的是子进程的退出码，只有在子进程正常退出的情况下才有意义
+					
+	   WIFSIGNALED(stat_val)
+			return true  假如子进程被信号杀死
+
+	    WTERMSIG(stat_val)
+			被信号杀死，去获得导致他死亡的信号值
+
+
+			
+		pid_t waitpid(pid_t pid, int *stat_loc, int options);		
+			pid：指定等待的进程或进程组
+			
+			==-1	  等待任意一个子进程
+			
+			> 0       等待指定的子进程（进程号pid）
+			
+			==0      等待与调用进程同组的任意子进程
+			
+			<-1      等待 组ID等于pid绝对值的那个组的任意子进程
+			
+			
+		stat_loc:用来保存子进程的退出信息（怎么死的，退出码...）
+		
+		options：
+		
+				0 ：表示阻塞等待
+				
+				1  :表示非阻塞等待，假如没有进程退出，立即返回
+
+		  返回值：成功返回退出的子进程的ID
+				失败返回-1，同时errno被设置
+				
+	事实上我们一般会让子进程去执行一个预先准备好的可执行文件或脚本
+	(4)exec函数族
+		exec函数族就是让进程去执行另外一个可执行文件或脚本
+				就是让另外一个程序文件的数据和指令覆盖当前进程的数据和指令段
+				
+		exec就是让一个进程去执行另外一个程序
+				指定这个程序的文件名
+					一个在文件系统中的程序的文件名（带路径）
+					
+				可能指定程序运行的参数
+				
+				在Linux程序中参数都是字符串
+				
+				
+			指定程序的参数的两种方式：
+			
+				l  :list
+					把程序运行的参数一个一个列举，程序运行的第一个参数就是程序的名字（不带路径）
+					最后以NULL结束
+					
+					"sum","123","234",NULL
+					
+				v  :vector  向量，数组
+				
+					把程序运行的参数，放在一个char*数组里面
+					
+					char*s[] = {"sum","123","234",NULL};
+					
+				p  :path  指系统指定的路径，如过你要执行的文件在系统指定的路径下，就不需要指定路径
+					
+					设置环境变量
+						PATH=dir1:dir2:dir3.....
+							
+					
+NAME
+       execl, execlp, execle, execv, execvp, execvpe - execute a file
+
+SYNOPSIS
+       #include <unistd.h>
+
+       extern char **environ;
+	   
+	   
+		l：列举
+       int execl(const char *path, const char *arg, ...);
+			path：指定要执行的那个程序文件的文件名（带路径）
+			
+			第二个参数开始：就是执行该程序文件所带的参数（要包含程序名，且一定是第一个）
+				要以NULL结尾
+				
+		返回值：成功，永远都不会返回，因为你的指令和数据段都被别人替换掉了
+
+				失败返回-1，同时errno被设置
+	   
+	   
+       int execlp(const char *file, const char *arg, ...);
+				file:指定要执行的那个程序文件的文件名,不需要带路径，因为p表示系统指定路径
+				
+				第二个参数开始：就是执行该程序文件所带的参数（要包含程序名，且一定是第一个）
+				要以NULL结尾
+	   
+       int execle(const char *path, const char *arg,
+                  ..., char * const envp[]);
+			path：指定要执行的那个程序文件的文件名（带路径）
+			
+			第二个参数开始：就是执行该程序文件所带的参数（要包含程序名，且一定是第一个）
+				要以NULL结尾
+				
+			envp:字符串数组，存的是环境变量
+				环境变量   NAME = value  
+				char * const envp[] = {"GG = /home/gec","AA  = fguerifi","QQ = /home/gec/pxl",NULL};
+				  
+       int execv(const char *path, char *const argv[]);
+			path：指定要执行的那个程序文件的文件名（带路径）
+			argv：参数数组
+			
+			
+			char *const argv[] = {"sum","123","234",NULL};
+			
+		
+       int execvp(const char *file, char *const argv[]);
+	   
+       int execvpe(const char *file, char *const argv[],
+                   char *const envp[]);
+				   
+	(5)system
+		NAME
+       system - execute a shell command
+
+SYNOPSIS
+       #include <stdlib.h>
+
+		system是用来执行command指定的命令或程序
+       int system(const char *command);
+
+		char s[] = {"ls -l"};
+		
+		system(s);
+		
+		system("ls -l");
+		
+
+		
+madplay -Q /pxl/music/1.mp3 -r &   后台运行,循环播放
+madplay -Q /pxl/music/1.mp3  & 后台运行
+
+eg:
+	system("madplay -Q /pxl/music/1.mp3 &");
+	
+	
+	or
+	
+	char cmd[256] = {0}
+	
+	sprintf(cmd,"madplay -Q /pxl/music/%s &",name);
+	
+	system(cmd);
+	
+	killall madplay
+	
+========
+					
+					
+					
+						
+					
+		
+
+
+
+

@@ -1,0 +1,473 @@
+gec@ubuntu:~$ 
+		gec			=>当前用户名
+		ubuntu		=>linux操作系统的名字
+		~			=>当前用户的家目录 /home/gec
+		$			=>当前用户是一个普通用户
+		#			=>超级用户
+		
+
+tab :向后补齐键
+	
+ctrl+l :清屏
+ctrl+u :快速删除当前光标处之前的所有字符的内容
+ctrl+k :快速删除当前光标处到行尾的内容
+
+
+Linux下命令行的格式
+	命令字  [选项] [参数] 
+	
+1.linux 软件的安装
+
+	APT（Advanced Packaging Tool）是一款强大的包管理工具，也可称机制
+	Linux里面功能最强大的命令行软件管理工具，用于获取，安装，编译，卸载和查询软件包
+	以及检查软件包的依赖关系
+	
+	下载并安装软件包
+	
+	sudo apt-get install 软件包的名称
+	
+	cd  /etc/apt
+	sudo cp sources.list.163 sources.list
+	sudo apt-get update
+	
+	卸载软件包
+	sudo apt-get remove 软件包的名称
+	
+	
+2.跟文件相关的命令
+	=============
+	cd  :change directory  改变目录
+	
+		cd  [目录名]  （表示想要去到哪个目录）
+		
+			eg:使用cd进入到共享目录下
+				1.绝对路径  以 / 开头的目录
+				
+					cd /mnt/hgfs/share
+					
+				2.相对路径  不以 / 开头的目录
+				
+					cd /
+					cd mnt
+					
+	cd .  :当前路径
+	cd ..  :上一级目录
+	cd  ~  :切换到当前用户的家目录
+	cd  -  :切换到原来那个目录
+	cd 不接目录名  ：切换到当前用户的家目录
+	
+	============
+	ls  :list 列举文件信息
+	
+		ls [options] [文件或目录]
+		
+		ls  :查看当前路径下的文件或目录
+		
+		options:
+			-a  all  所有的  把隐藏文件也列举出来
+			-l  把一个文件的所有信息都列举出来
+		
+		-rwxrwxr-x 1 gec gec 0 Jul  9  2018 1.txt
+		
+		-（文件类型） ：- 普通文件
+						d  文件夹 ，目录
+						p  pipe管道
+						l  符号链接（软链接） ？
+						s  socket套接字
+						b  block  块设备
+						c  char 字符设备
+		
+		rwx ：所属用户的权限  可读可写可执行
+		rwx ：所属组用户的权限  可读可写可执行
+		r-x ：其他用户的权限   可读可执行没有可写
+		
+		1 ：硬链接数
+		
+		gec ：所属用户
+		gec ：所属组用户
+		
+		0 ：文件大小（字节）
+		
+		Jul  9  2018 ：最后访问时间
+		1.txt ：文件名
+	
+	=====
+		file:查看文件类型
+		pwd  :查看当前路径
+	
+	=====
+		chmod  :change mode  改变一个文件的权限
+		
+			用户 ：u(uesr)  g(group)  a(other)  a(all)
+			权限  ：rwx
+			
+		chmod  options（想怎么改变这个权限）     文件（想要改变权限的文件）
+		
+		（1） chmod  [u/g/o/a]  +/-  r/w/x   文件
+				chmod g+w  xxx
+				chmod ug+rw xxx
+				chmod a+x xxx
+				chmod +x xxx
+				
+		(2)以8进制的形式操作
+			r-xr-xr-x
+			101101101
+			555
+			
+			chmod 555 xxx
+			chmod 645 xxx
+			
+		
+	======
+	chown  :change owner  改变文件的所有者
+	
+		chown  新用户:新组用户  文件
+		
+	======
+	touch  文件名  
+		创建一个空文件（不会打开）
+	======
+	cp  ：copy 拷贝文件
+		
+		cp  [options]  源文件   目的文件
+						普通文件  普通文件
+						普通文件   目录
+						目录        目录
+						
+						
+		options：
+				-r   递归    当拷贝目录的时候需要加上
+				
+				-f   强制   非交互模式，不询问用户是否覆盖
+	=====			
+	rm :删除
+		rm [options] 文件名/目录名
+			rm 1.txt //删除当前目录下的1.txt 
+			rm -r  xxx //删除当前目录下的xxx目录
+			
+		options：
+				-r   递归    当删除目录的时候需要加上
+				
+				-f   强制   非交互模式，不询问用户是否覆盖	
+				
+				
+	*  ：通配符
+	
+	rm *.txt    //删除当前目录下所有命名以.txt结尾的文件
+	
+	ls *.txt  
+	
+	
+	eg:
+		1.把共享目录下的1.txt拷贝到家目录下
+			cp 1.txt /home/gec(~)
+		
+		2.在当前路径下执行把上一层目录的一个文件夹拷贝到家目录
+			cp -r ../code  ~
+		
+		3.在当前路径下执行把刚刚拷贝到家目录的文件夹删除
+			rm -r ~/code
+	=====
+	
+	mkdir :创建一个目录
+		mkdir [options] 名字(想要创建的目录的名字)
+		
+		mkdir 123/345  123这个父目录是不存在的，这个命令会失败
+		
+		options ：
+			-p   parent 父
+				mkdir -p 123/345  先看父目录是否存在，若不存在先创建父目录
+		
+	rmdir :只能删除空目录
+	
+	=======
+	mv  :移动
+		mv  源文件   目的文件
+		
+			普通文件1   普通文件2
+						：如果两个路径一样，类似于重命名
+						：如果两个路径不一样，剪切
+			普通文件    目录
+			目录         目录
+			
+		
+	======
+	在终端上显示文件中文本
+		cat 路径名（直接文件名默认是当前路径）
+		more  路径名
+			enter  显示下一行
+			空格   显示一屏
+			q   退出
+			
+		less 路径名
+			上下左右键  鼠标
+			q  退出
+			
+		tail -num 路径名   显示文件中的后num行
+		head -num 路径名   显示文件中的前num行	
+		
+	=======
+	创建链接文件（不能再共享目录下创建）
+	
+		软链接： ln -s 原来的文件名  新的文件名
+		
+		硬链接：  ln  原来的文件名  新的文件名
+	
+		区别：
+			软链接  内容指向的 目标文件的文件名	
+				（快捷方式，如果软链接所对应的文件删除了，那么再次查看文件内容是就会找不到问文件
+					但是，还是可以通过往软链接文件中输送内容。就会重新以你软链接里面的文件名创建文件）
+			
+			硬链接  内容指向的 目标文件的内容
+				（拷贝+同步）
+				
+		完整的删除文件，只有硬链接数为0时候，文件用户数据才会被回收	
+		
+		
+		
+	======
+	文件压缩、归档
+		归档文件 ：将一组文件或目录保存到一个普通文件中
+		压缩文件 ：将一个文件压缩成一个文件
+		
+	
+		tar  :
+			gzip
+			bzip
+			
+		tar [options]  tarfile(压缩生成的文件名)  src_file_name(要被压缩的文件)
+		
+			
+			options：
+				-c   创建一个归档文件
+				-x   释放一个归档文件
+				-v	 显示归档或释放过程中的信息
+				-f   指定归档文件的名称
+				-z   使用gzip的算法
+				-j    使用bzip的算法
+			
+	
+		eg：
+			压缩：
+				tar -zcvf   xxxx.tar.gz   1.txt 2.c 3.txt *.h dir/
+			
+			用gzip(-z)的压缩算法把文件 1.txt 2.c 3.txt *.h dir/归档（-c）并压缩成(-f)xxx.tar.gz
+			并且显示其过程信息（-v）
+	
+	
+			解压：
+				tar -zxvf   xxxx.tar.gz    =》默认解压在当前路径下
+				
+				tar -zxvf   xxxx.tar.gz  [-C 指定目录]	=》解压到指定目录
+	
+	
+		eg:
+			使用bzip的算法去压缩解压
+			
+				1.把共享目录下的所有.c文件压缩成code.tar.bz
+				
+				2.解压code.tar.bz 解压到/home/gec/Desktop
+	
+			
+=================
+	1.	
+		man  command/function  name  查看完整的说明文档
+			
+				man  -f command/function  name
+					查看命令或函数所在的页数
+					
+				man 页数  command/function  name
+		
+	2.基本的系统维护命令
+		shutdown  关机
+			sudo shutdown -h now 现在立即关机 
+			
+		reboot  重启
+		
+		su  用户名  ：切换用户到到 “用户名”
+			sudo -s  :进入到root用户
+			sudo su
+			
+		exit ：退出当前用户
+		clear :清屏
+		date:输出当前日期
+		history  ：查看历史命令
+		
+		echo  "fgiregfiu"   :输出到终端
+		
+		>> ：输出重定向（追加）
+		>   ：输出重定向（直接替换）
+		
+	3.用户管理
+		vim /etc/passwd
+		
+		增加用户：
+			adduser  username   =>增加一个用户
+			
+			userdel  username  =>删除一个用户
+			
+			passwd username  修改username的密码
+			
+		增加用户组：
+			vim /etc/group
+			
+				增加用户组
+					addgroup groupname 增加用户组
+					groupdel groupname 删除用户组
+					
+	4.进程管理
+		ps
+		
+		-e  ：每一个
+		-f  :全部信息
+		
+		-ef  每一个程序的全部信息
+		top :按照cpu的占用率来排名   q ：退出
+		
+		kill -9  进程ID  =》把进程杀死
+		
+	
+
+eg:
+
+	1.把字符串"abccba" 用重定向保存到文件1.txt中  
+		>>   >
+		
+	2.创建用户（用户名为自己名字首字母）
+		密码 ：123456
+		
+		修改它的密码，删除用户
+		
+	3.运行一个死循环程序，打开另外一个终端将那个死循环的进程杀死
+	
+========================
+vim的使用方法：
+	vi/vim 是Unix和Linux下最基本，最常用功能最强大的文本编辑器
+	
+	vim [文件名]  ：文件存在就打开
+					文件不存在就是创建并打开
+					
+					文件一打开默认处于命令行模式
+					
+	vi/vim有两种模式：命令行模式 输入模式
+	命令行模式：输入的所有字符都当做是命令
+	输入模式：输入的所有字符都当做是文本编辑的内容
+	
+	命令行模式=》输入模式
+		i :默认光标定位在当前位置
+		I :默认光标定位在当前行的行首
+		
+		o ：在光标的后面新开一行
+		O ：在光标的前面新开一行
+		
+		a :光标处于当前字符的下一个
+		A ：光标定位在当前行的行尾
+					
+	输入模式	=》		命令行模式
+		ESC
+		
+		退出命令：
+			:w   保存文件
+			:q   不保存文件退出
+			:wq   保存文件并退出
+			:w  filename   另存为filename
+			:q!   强制退出
+			:x  保存退出（创建文件修改才存在）
+			
+		复制：
+			yy:复制光标所在的整行
+			nyy:复制n行（包括光标所在行）
+			y$ :复制从光标开始到行尾的内容
+			
+		粘贴：
+			p ：粘贴在下一行
+			shift+p :粘贴在上一行
+			
+		删除：
+			x :删除光标所在的一个字符
+			dd:删除光标所在的整行
+			ndd :删除n行（包括光标所在行）
+			d$ :删除从光标开始到行尾的内容
+			d0 :删除光标前一个字符到行首的内容
+			d回车：删除当前行和下面一行的内容
+			
+	替换：
+		r:替换光标所在的单个字符
+		R:替换光标及后面的多个字符（esc结束）
+	
+	撤销：	
+		u：该命令撤销上一次所做的操作
+		
+		ctrl+r :撤销撤销
+		
+		
+	查找命令
+	/string    =》从光标位置出发，向后查找字符串string
+	n  ：向后找
+	N  :向前找
+	
+	替换命令
+	:%s/old_string/new_string/c,g
+	c ：代表一个一个替换
+	g :全部替换
+	
+	
+	:num  光标跳到多少行
+	:$   光标移动到文件末行
+	
+	
+	:set nu  设置行号
+	:set nu!  取消行号
+	
+	多个文件打开
+		vim -o 1.c 2.c   横屏
+		vim -O 1.c 2.c   竖屏
+		
+	打开文件和切换文件
+		vim file1
+		
+		:e file2
+		
+		
+	使用vim 编写代码
+		运行可执行文件时： ./a.out 123 456
+
+		
+	1. 检查你运行时输入的参数必须为3
+	
+	2.运行结果格式
+		123 + 456 = 579
+		
+	argc:命令行参数个数
+	argv:字符串数组
+	
+	/*
+		atoi:把十进制数字字符串解析为数字
+	*/
+	int atoi(char*s)
+	{
+		int d;
+		int num = 0;
+		while(*s)
+		{
+			d = *s-48; 
+			num = num*10+d;
+			s++;
+		}
+		
+		return num;
+	}
+	
+	int main(int argc,char *argv[])
+	{
+		if(argc != 3)
+		{
+			printf("./a.out  hguhrogi\n");
+			return -1;
+		}
+		printf("%d + %d = %d\n",atoi(argv[1]),atoi(argv[2]),atoi(argv[1])+atoi(argv[2]));
+	}
+	
+	
+		
+	

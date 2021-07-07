@@ -1,0 +1,25 @@
+sqlite3 命令行
+	1.创建数据库
+		sqlite3 test.db   //test.db 如果存在直接打开，如果不存在则创建
+		
+	2.查看数据库中所有表
+		.table
+		.tables
+		
+	3.退出
+		.q
+		.quit
+		.exit
+		
+	4.查看表的创建语句
+		.schema [表名]
+		
+	5.显示设置
+		.header on  显示列名
+		
+		.mode column
+		
+	6.备份数据库
+		1. cp   xxx.db   yyyy.db
+		
+		2. sqlite3 test.db  .dump  > xxx.sql

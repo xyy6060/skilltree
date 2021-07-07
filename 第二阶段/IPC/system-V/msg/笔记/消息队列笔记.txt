@@ -1,0 +1,192 @@
+system-V  消息队列 ：实现一个带头结点的链表
+
+对于系统中的每个消息队列，内核维护在一个定义在<sys/msg.h>头文件的信息结构中：
+	
+		struct  msqid_ds  "头结点"  =》表示一个消息队列
+		{
+		  struct ipc_perm msg_perm;	/* 该结构的r/w的权限*/
+		  
+		  __time_t msg_stime;		/* 最后发送消息的时间 */
+		
+		  __time_t msg_rtime;		/* 最后接收消息的时间*/
+		
+		  __time_t msg_ctime;		/* 最后修改消息结构体的时间 */
+		
+		  __syscall_ulong_t __msg_cbytes; /*当前队列中消息的总字节数 */
+		  msgqnum_t msg_qnum;		/* 当前队列中消息的总数（struct msg结构体的总数） */
+		  
+		  msglen_t msg_qbytes;		/*队列中允许的最大字节数 */
+		  __pid_t msg_lspid;		/*最后一个发送消息的进程号 */
+		  __pid_t msg_lrpid;		/*最后一个接收消息的进程号*/
+		  
+		 struct msg*msg_first;//指向消息队列上的第一个消息
+		 struct msg*msg_last;//指向消息队列上的最后一个消息
+
+		};
+		
+		消息节点
+		struct msg
+		{
+			long type;//消息类型
+			char data[];//消息的内容
+			struct msg*next;
+			long length;//消息的长度
+		};
+
+===========
+		struct msg
+		{
+			long type;//消息类型
+			char data[0];//消息的内容 柔性数组()
+		};
+
+		
+2.消息队列的操作
+	键值
+	
+	申请一个system-V ipc的键值
+		key 的作用就是尽量的唯一标识一个system-V ipc对象 （成千上万个）
+		
+		ftok
+		
+		NAME
+       ftok  -  convert  a pathname and a project identifier to a System V IPC
+       key
+
+SYNOPSIS
+       #include <sys/types.h>
+       #include <sys/ipc.h>
+
+	   ftok是用一个文件名和一个整数来合成key值
+       key_t ftok(const char *pathname, int proj_id);
+			pathname：要一个已经存在的路径，ftok是去获取这个文件的inode号
+			
+			proj_id :一个整数
+			
+		返回值：成功返回一个IPC键
+				失败返回-1，同时errno被设置
+				
+	注意：如果两个参数相同，那么产生的键值也相同
+	
+=====
+	获取一个消息队列
+	msgget
+	
+	NAME
+       msgget - get a System V message queue identifier
+
+SYNOPSIS
+       #include <sys/types.h>
+       #include <sys/ipc.h>
+       #include <sys/msg.h>
+
+		msgget是用来获取（创建，打开）一个system V消息队列
+       int msgget(key_t key, int msgflg);
+				
+			key_t key：system V ipc的键值 ，一般由ftok函数生成
+			 msgflg；标志位
+					（1） IPC_CREAT  创建
+						IPC_CREAT | 权限位
+						IPC_CREAT | 0666
+								权限只有读和写  ，执行无效
+						
+						IPC_EXCL  
+					 
+					（2）
+						0   打开
+				
+		返回值：成功返回一个打开的system V消息队列的id
+				失败返回-1，同时errno被设置
+				
+				
+	
+=======
+发送和接收消息
+	msgsnd/msgrcv
+	
+	NAME
+       msgrcv, msgsnd - System V message queue operations
+
+SYNOPSIS
+       #include <sys/types.h>
+       #include <sys/ipc.h>
+       #include <sys/msg.h>
+		
+		msgsnd是用来发送一个消息到指定的消息队列上
+       int msgsnd(int msqid, const void *msgp, size_t msgsz, int msgflg);
+			msqid：消息队列的id,表示要往哪个消息队列上发送消息
+			msgp:指向要发送消息的结构体的指针，该结构体应具有如下类型（自行定义）
+				  struct msgbuf {
+								long mtype;       /* message type, must be > 0 */消息类型
+								char mtext[ ];    /* message data */消息正文
+							};
+			msgsz：消息内容的大小，结构体中数组mtext的实际大小
+			msgflg：发送标志
+					（1） 0  默认（阻塞模式）
+					（2）IPC_NOWAIT  非阻塞
+					
+					
+		返回值：成功返回0
+				失败返回-1，同时errno被设置
+			
+		msgrcv是用来从消息队列上接收一个消息
+       ssize_t msgrcv(int msqid, void *msgp, size_t msgsz, long msgtyp,
+                      int msgflg);
+					  
+			msqid：消息队列的id，表示要往哪个消息队列上接收消息
+			msgp:指向一个消息结构体（上述定义的结构体），用来保存读取的信息
+			msgsz：msgp指向一个消息结构体，最多可以保存多少个字节的消息
+			msgtyp:想要读取的消息的类型   （0  为任意类型）
+			
+			msgflg：接收标志
+				（1） 0  默认（阻塞模式）
+				（2）IPC_NOWAIT  非阻塞
+			
+		返回值：成功返回实际读入到缓冲区数据的字节数
+				失败返回-1，同时errno被设置
+			
+=========
+消息队列控制操作
+	msgctl
+	
+	 msgctl - System V message control operations
+
+SYNOPSIS
+       #include <sys/types.h>
+       #include <sys/ipc.h>
+       #include <sys/msg.h>
+	
+	msgctl是用来在一个消息队列上提供出来发送和接收消息以外的控制操作
+       int msgctl(int msqid, int cmd, struct msqid_ds *buf);
+	   
+	   msqid：消息队列的id
+	   cmd：命令号
+			 IPC_STAT：获取消息队列的信息
+			 IPC_SET:
+			 IPC_RMID:删除指定的消息队列
+			 
+		eg:
+			msgctl(msg_id,IPC_RMID,NULL)
+			
+		返回值：成功返回0
+				失败返回-1，同时errno被设置
+				
+				
+消息队列：
+		msgget返回的是一个消息队列的id,他不是一个文件描述符
+			
+
+
+查看命令
+	查看消息队列  =>ipcs -q
+	查看共享内存  =>ipcs -m
+	查看信号量  =>ipcs -s
+	查看所有ipc  =>ipcs -a
+		
+		
+删除命令
+	删除消息队列  =>ipcrm  -q  msg_id   或  ipcrm  -Q  msg_key
+	删除共享内存  =>ipcrm  -m  shm_id   或  ipcrm  -Q  shm_key
+	删除信号量  =>ipcrm  -s  sem_id   或  ipcrm  -Q  sem_key
+
+			

@@ -1,0 +1,10 @@
+PRAGMA foreign_keys=OFF;
+BEGIN TRANSACTION;
+CREATE TABLE stu(num int primary key,name text,score int);
+INSERT INTO "stu" VALUES(1001,'pxl',99);
+CREATE TABLE student(num int primary key,name text not null,class text,sex int default 1,age int check(age > 18 and age < 60));
+INSERT INTO "student" VALUES(1001,'pxl','CS19167',1,19);
+INSERT INTO "student" VALUES(1002,'pxl',NULL,1,35);
+CREATE TABLE stu1(num int primary key,score int);
+INSERT INTO "stu1" VALUES(1001,99);
+COMMIT;

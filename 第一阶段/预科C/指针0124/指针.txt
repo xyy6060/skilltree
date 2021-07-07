@@ -1,0 +1,990 @@
+1.引入
+	int a;（变量名，变量的值，变量的地址）
+	
+	a = 1024;//把数值1024存放到变量a对应的地址中
+	b = a;//取变量a的值赋值给b
+	
+	=>在C语言中，任意一个变量名，都有两层含义
+		（1）代表该变量的存储单元地址  左值
+		（2）代表该变量的值  右值
+		
+	对于一个变量的访问，只有两种情况：
+	（1）把一个值写到变量的地址中  写
+	（2）从变量的地址中取值  读
+	
+	如果我们知道一个变量的地址，是不是就可以通过该变量的地址去访问这个变量
+		可以
+	
+	如果通过这个地址去访问这个地址对应的对象？
+		
+		指针
+		
+	对象的访问有两种方式
+		直接访问：通过对象名去访问
+			a = 1024;
+			b = a;
+			
+			缺陷？
+				作用域的范围内才能访问
+				
+		间接访问：
+			通过对象的地址去访问 =》指针
+			
+2.什么是指针？
+	地址：分配给每个变量的内存单元都有一个编号，这个编号就是我们说的地址。按字节来编号。
+	
+	在C语言中，指针的概念与地址差不多，可以认为指针就是一个地址编号，
+	一个变量的地址，也可以成为变量的“指针”
+	
+	通过一个对象的地址来间接访问这个对象
+		首先是不是要先保存这个对象的地址
+	
+3.指针变量
+	指针变量就是一个变量，只不过它是用来保存另外一个对象的地址
+	
+	指针变量的定义：
+		指向的变量的类型 *指针变量名（*用来标识该变量是一个指针变量）
+		
+		"指向的变量的类型" :
+			“指向” ：保存谁的地址，就指向谁
+				p保存a的地址，p指向a
+				
+		eg:
+			假如我们要定义一个指针变量p,来保存a的地址
+			
+			int a;
+			
+			int *p;
+			
+		指针变量的类型：
+			它所指向变量的类型 *
+			
+4.与指针相关的操作符
+	&（取地址符） ：单目运算符
+		&对象  
+			取某个C语言对象（变量，数组，函数...）的地址 
+			
+		p = &a;
+				
+	*(指向运算符)
+		*地址  《=》地址对应的那个变量
+		
+		int a = 5;
+		int *p = &a;
+		
+	*&a <=> a
+		=>*&直接约掉
+	
+	&*&a <=> &a
+	
+	
+	int a;
+	typeof(a) =>int
+	
+	int *p;
+	typeof(p) =>int*
+	
+练习：
+	写一个函数将两个变量的值交换
+		
+		void change(int x,int y)
+		{
+			int t;
+			t = x;
+			x = y;
+			y = t;
+		}
+		void change2(int* x,int* y)
+		{
+			int t;
+			t = *x;//*x =*&a
+			*x = *y;
+			*y = t;
+		}
+		int main()
+		{
+			int a = 4,b = 5;
+			printf("before:a = %d b = %d\n",a,b);
+			change2(&a,&b);
+			printf("after:a = %d b = %d\n",a,b);
+		}
+		
+5.指针变量作为函数参数
+	传的是 “值”
+	C语言中函数参数的传递只能是 “传值调用”
+	把实参的值 赋值给 形参
+	
+	int main()
+	{
+		int *p;//定义了一个指针变量，p会对应一个存储单元
+		
+		*p = 1024;
+		
+		printf("%d\n",*p);
+	}
+	
+	
+6.数组与指针
+	数组元素与普通变量是一样的，也有自己的地址。数组元素有左值和右值
+	并且数组元素间的地址是连续的，数组名可以代表首元素的地址
+	
+	int a[10];
+	
+	假如，我要定义一个指针变量p，来保存a[0]的地址
+	
+		typeof(a[0]) *p;
+		int *p;
+		p = a;//p = &a[0]
+		
+		*p = 1024;//a[0] = 1024
+		
+		能不能通过p去访问a[1]
+			可以
+			
+		*p <=> *&a[0]
+		
+		
+指针作加减：
+	p+i (p是一个指针，i是一个整数)
+	是加减i个指向单元的长度
+	
+	p+1 => 往后面移了一个单元
+	
+	
+	p == &a[0]
+	
+	p+1 => 往后面移了一个int 
+	
+	p+i 《=》 &a[i] 《=》 a+i
+	
+	*(p+i) <=> a[i] 《=》 *(a+i)
+	
+	
+练习：
+	int a[5];
+	定义一个指针变量p保存a[0]的地址，把100赋值给a[0],有几种表示方法？ 4.c
+		int *p = &a[0];
+		
+		a[0] = 100;
+		*p = 100;
+		*a = 100;
+		
+		*&a[0] = 100;
+		**&p = 100;
+		p[0] = 100;
+		
+		
+	
+结论：
+	p[i] <=> *(p+i) =>*&a[i] <=> a[i]
+	
+
+eg：
+	数组的赋值 5.c
+	int a[5];
+	for(i = 0;i < 5;i++)
+	{
+		scanf("%d",a+i);
+	}
+	
+	int *p = &a[2];
+	
+	p[2] =>*(p+2) =>*(&a[2]+2) =>*&a[4] =>a[4]
+
+
+7.再论数组名与指针
+	数组名是一个常量指针，是指针就有类型
+	数组名是一个什么类型的指针？
+		
+	指针的类型决定指针作加减的时候，移动的单位长度
+	
+☆	数组名可以看做是指向数组第一个元素类型的常量指针，数组名在数值上为第一个元素的地址
+	
+	int a[10];
+	
+		a当做是一个数组名，代表整个数组
+		typeof(a) =>int[10]
+		sizeof(a) =>40
+		
+		a当做指针来看  
+			typeof(a)  =》 typeof(a[0])*
+							=》int*
+							
+							在数值上 &a[0]
+							
+
+练习：
+	1.
+	int a[10]  = {1,2,3,4,5,6,7,8,9,0};
+	printf("a = %p\na+1 = %p\n&a+1 = %p\n",a,a+1,&a+1);
+	
+	a =>&a[0]
+	a+1 =>&a[0]+1 =>&a[1]
+	
+	&x 是一个指针，保存的x的地址
+		=》这个指针是指向x
+		typeof(&x) =>typeof(x)
+		
+	&a	=>是一个指针，保存的a的地址	
+		这个指针是指向a
+		
+		=>这个指针的类型
+			=>typeof(a)*
+			=> int[10]*
+			
+	&a+1 =>往后移了一个int[10],也就是40个字节
+	
+		
+	2. 
+		int b[3][4] = {1,2,3,4,5,6};		
+		printf("b = %p\nb+1 = %p\n&b[0]+1 = %p\n&b+1 = %p\n",b,b+1,&b[0]+1,&b+1);
+		
+	b 是一个数组名，是一个指向第一个数组元素的常量指针
+	
+	&b[0]  第0行的首地址  数值上 &b[0][0]   x
+	
+	b+1 =>&b[0]+1 =>&b[1]  第1行的首地址   x+16
+	&b[0] =》指针
+			typeof(&b[0]) =>typeof(b[0])* =>int[4]*	
+		
+	&b[0]+1 =>&b[1]  第1行的首地址   x+16
+	
+	&b+1
+		typeof(&b) =>typeof(b)*
+					=>int[4][3]*
+					
+	&b+1 =>往后移了1个int[4][3]    x+48
+					
+
+8.多维数组与指针
+	数组名可以看做是指向数组第一个元素类型的常量指针，数组名在数值上为第一个元素的地址
+	
+	假设有
+		int a[3][4];
+		这个二维数组a是不是可以看成是元素为int[4]的类型的一维数组
+			a[0] a[1] a[2]
+			
+		*(a+i) <=>a[i] =>指向的是一个一维数组
+		再次指向一个才能指向二维数组的元素
+			*(*(a+i)+j) <=>a[i][j]
+			
+	=>
+		a+i :a是只能看成指针
+				typeof(&a[0]) =>typeof(a[0])*
+							=>int[4]*
+		a<=> &a[0]					
+		a+i=>&a[i]
+		*(a+i) =>*&a[i] =>a[i]
+		
+		*(a+i)+j =>a[i]+j
+		
+		*(a+i) 绝对是一个指针
+				typeof(*(a+i)) =>typeof(a[i])
+							   =>typeof(a[i][0])*
+							   =>int*
+		
+		
+		*(*(a+i)+j) =>*(a[i]+j) =>*(&a[i][j]) =>a[i][j]
+		
+	
+===============
+	int a[3][4];
+	表达式		表达式的类型		表达式的含义		表达式的值
+	
+	a+i	(&a[i])	  int[4]*			 第i行的首地址	     &a[i][0]        
+	
+	*(a+i)+j       int* 			 第i行第j列的地址     &a[i][j]
+	
+	*(*(a+i)+j)    int				第i行第j列的元素       a[i][j]
+	
+
+		
+作业：
+	int a[3][4];
+	表达式		表达式的类型				表达式的含义		表达式的值
+	
+	a			typeof(a) =>int[4][3]   	代表整个数组		&a[0] =>&a[0][0]
+				当做指针
+					int[4]*
+	
+	
+	a[0]		a[0]又是一个数组（一维数组）	代表第0行  		&a[0][0]
+					int[4]
+				指针：
+						typeof(a[0][0])*
+							=>int *
+	
+	&a[0][0]		int*						a[0][0]的地址		&a[0][0]
+	
+	
+	a+1			&a[0]+1=>&a[1]				第1行的首地址			&a[1] =>&a[1][0]
+					int[4]*
+	
+	&a[1]			int[4]*    				第1行的首地址			&a[1] =>&a[1][0]	
+	
+	&a				&a肯定是一个指针		&a:整个数组的地址		 &a =>&a[0] =>&a[0][0] 数值
+					int[4][3]*
+	
+	&a+1			int[4][3]*				整个数组a的地址的下一个地址   数值上比&a多48
+	
+	a[1]+2			&a[1][0]+2 =>&a[1][2]
+					int*						a[1][2]的地址				&a[1][2]
+	*(a+1)+2
+	
+	&a[1][2]		int *
+
+	*(a[1]+2)		*(&a[1][2]) =>a[1][2]		元素a[1][2]					a[1][2]
+						int
+	
+	*(*(a+1)+2)		int 						元素a[1][2]					a[1][2]
+	
+	
+9.指针数组与数组指针
+	
+	（1）指针数组
+		是一个数组，里面的每一个元素都是指着类型
+		
+		int*p[4];//定义了一个数组,数组名为p里面有4个元素，每个元素都是int*类型  
+
+	（2）数组指针
+		一个指向数组的指针，称为数组指针
+		
+		int a[4];//定义了一个数组
+		
+		要定义一个指针变量p来保存数组a地址，如何定义？
+		
+		typeof(a) *p;
+			=>int[4] *p;
+			=>int(*p)[4]
+			
+		p = &a;
+		
+		p+1  => 在数值上比p多了16
+		
+区别：
+	int a[10];
+	
+	int(*p)[10]  =>*((*p)+i) =>int
+	
+	int*p[10]  =>  *(*(p+i)) =>int
+	
+
+10.字符串与指针
+	c语言中没有字符串这个类型。C语言的字符串是通过char*来实现
+	c语言中字符串 是用“” 引起来的一串字符，并且字符串后面默认加上'\0'(字符串结束符)
+	
+	只需要保存字符串的首地址，从首地址开始找找到第一个\0，前面的字符就是字符串里面的字符
+	
+	
+	字符串的值就是这个字符串第一个字符的地址
+	
+	eg:
+		C语言中的字符串（"12345"）是保存在.rodata(只读)的内在区域
+				字符串代表这个内存空间的首地址
+				
+		"12345"
+		
+		typeof("12345") =>typeof(&'1')
+						=>char *
+						
+						
+		char* st = "12345";//在程序运行时会为这个字符串在.rodata分配6个字节的空间
+							//st保存了这个空间的首地址
+		
+		st的值 字符'1'的地址
+		st+1 是字符'2'的地址
+		
+		*(st+1) =>地址所对应的对象（常量）
+		
+		*(st+1)  = 'a';//error 
+				//没有语法错误，段错误=》试图修改一个常量区间
+		====
+		
+		char s[] = "12345";//s是一个数组，如果这是一个全局变量
+							//保存在.data区间
+							//如果这是一个局部变量
+							//保存在栈区间
+							栈空间和.data空间都是可读可写
+							
+		
+		*(s+1) = 'a';//right	
+
+			
+	练习：
+		给你一个字符串，写一个函数，求这个字符串的长度
+		
+		strlen
+	
+		int strlen(char *s)
+		{
+			int n = 0;
+			while(*s)//*s != 0
+			{
+				n++;
+				s++;
+			}
+			
+			return n;
+		}
+		
+		int main()
+		{
+			char *s = "12345678";
+			int re = strlen(s);
+			printf("re = %d\n",re);
+		}
+	
+	
+11.字符串处理函数
+	（1）strlen :用来求字符串的长度
+	NAME
+       strlen - calculate the length of a string
+
+SYNOPSIS
+       #include <string.h>
+
+		strlen :用来求字符串的长度,算到字符串的第一个\0为止
+       size_t strlen(const char *s);
+		const:只读
+		s:要计算长度的字符串的首地址
+		
+		返回值：
+			返回s这个字符串的长度
+			
+
+DESCRIPTION
+       The  strlen() function calculates the length of the string s, excluding
+       the terminating null byte ('\0').
+	
+RETURN VALUE
+       The strlen() function returns the number of bytes in the string s.
+	
+eg:
+	int l = strlen("gfuiwehi");
+	l = 8
+	
+	char s[4] = {'q'};
+	
+	strlen(s) =>1
+	
+(2)strcpy/strncpy
+
+	字符串的拷贝函数
+	
+	把一个字符串拷贝到另外一个字符串中
+	
+NAME
+       strcpy, strncpy - copy a string
+
+SYNOPSIS
+       #include <string.h>
+
+	   strcpy：用来把src指向的字符串，拷贝到dest指向的内存空间中
+				一个字符一个字符拷贝，直到遇到一个\0结束（\0也会被拷贝）
+       char *strcpy(char *dest, const char *src);
+
+       char *strncpy(char *dest, const char *src, size_t n);
+
+
+		eg:
+			char s1[8];
+			char s2[8] = "qwert";
+			
+			//strcpy(s1,"1234567890");
+			strncpy(s1,"1234567890",8);
+			
+			printf("%p\n%p\n",s1,s2);
+			printf("%s\n",s1);//12345678qwert
+			printf("%s\n",s2);//qwert
+			
+		strcpy是有bug
+			“越界”
+				=》会导致内存的非法访问
+				
+		strncpy的功能strcpy是类似，只不过strncpy它顶多拷贝src前面n个字符
+			到dest中去。那么strncpy到底拷贝多少个字符？
+				（1）遇到\0拷贝结束（\0会拷贝进去）
+				（2）已经拷贝了n个字符（\0不会拷贝，除非第n个字符刚好为\0）
+	
+	 char *strncpy(char *dest, const char *src, size_t n);
+	 
+	 
+(3)strcmp
+	字符串比较
+		字符串如何比较？
+			字符比较 =》比较字符的ASCII
+			一个一个字符的ASCII比较
+		c1 ,c2是一个字符
+		
+		if c1 > c2 返回1
+		if c1 == c2 则继续比较下一个字符，如果全部相等返回0
+		if c1 < c2 返回-1
+		
+NAME
+       strcmp, strncmp - compare two strings
+
+SYNOPSIS
+       #include <string.h>
+		
+		strcmp用来比较字符串s1和s2
+       int strcmp(const char *s1, const char *s2);
+		
+		eg：
+			strcmp("123","ABC");  <0
+			strcmp("123","123\0fsdh");  0
+			strcmp("1234","123");  >0
+			
+		strcmp用来比较字符串s1和s2顶多前面的n个字符
+       int strncmp(const char *s1, const char *s2, size_t n);
+
+			strncmp(s,"peng",4);  =>  看s前面的四个字符是不是“peng”
+			
+(4)strcat
+	字符串的连接函数
+NAME
+       strcat, strncat - concatenate(连接) two strings
+
+SYNOPSIS
+       #include <string.h>
+		
+		strcat：是用来把src指向的字符串拷贝到dest指向的字符串的末尾（尾部连接，从\0开始）
+       char *strcat(char *dest, const char *src);
+		
+		strcat有一个bug。“越界”
+			dest指向的空间可能不够大
+	   
+	   返回值：
+			如果成功：返回连接后字符串的首地址
+			如果失败：返回NULL
+			
+		strncat把src指向的字符串拷贝到dest指向的字符串的末尾（尾部连接，从\0开始）
+			但是顶多只拷贝n个字符
+       char *strncat(char *dest, const char *src, size_t n);
+	   
+			到底能拷贝多少个字符？
+				(1)遇到\0拷贝结束（\0会拷贝进去）
+				(2)即便没有遇到\0,已经拷贝了n个字符，就会结束（\0不会拷贝，除非第n个字符刚好为\0）
+				
+	
+	练习：
+		把一个十进制数字字符串，转成一个整数
+			"123" =>123
+			
+		int atoi(char*s)
+		{
+			int d;//保存当前位置的数值
+			int num = 0;//整数值
+			
+			while(*s)
+			{
+				d = *s-'0';
+				num = num*10+d;
+				
+				s++;
+			}
+			
+			return num;
+		}	
+
+		int main()
+		{
+			printf("%d\n",atoi("345"));
+		}
+			
+12.函数指针和指针函数
+
+	函数指针
+	
+	在C语言中不仅是变量，数组有地址，函数也是有地址的
+	如果我们定义一个指针变量，来保存函数的地址。这个指针就称为函数指针（指向的是一个函数）
+	
+	（1）函数指针如何定义？
+		指向的类型 *指针变量名;
+		
+	int sum(int a,int b)
+	{
+		return a+b;
+	}
+	
+	定义一个指针变量p保存sum 的地址，怎么定义
+	
+	typeof(sum)*p;
+	
+		如何来描述一个函数的类型：
+			函数类型 ：三要素：返回值类型 函数名 （函数的形参列表）
+			
+			int sum(int a,int b)
+	
+			int (int,int) =>函数的类型，返回一个int，带两个int的参数
+			
+	int function(int a,float b)
+	{
+		
+	}
+	
+		int (int,float) =>函数的类型，返回一个int，第一个参数int，第二个参数float
+	   
+	typeof(sum)*p;
+	int(int,int)*p;
+		=>int(*p)(int,int);
+			=>p是一个指针，指向一个int(int,int)类型的函数
+			
+=》函数指针的定义方法：
+	指向的函数的返回值类型  (*指针变量名)(指向的函数的形参类型列表);
+	
+	
+(2)怎么给函数指针赋值？
+	p = 函数的地址
+	函数的地址怎么获取？
+		&函数名
+		
+		or
+		
+		函数名  （在C语言中，函数名就代表函数的地址）
+		
+	eg:
+		p = sum;
+		or
+		p = &sum;
+		
+		
+(3)怎么通过函数指针去调用指向的函数 7.c
+
+	int sum(int a,int b)
+	{
+		return a+b;
+	}
+	
+	int (*p)(int,int);//定义了一个函数指针
+	
+	p = &sum;// p = sum;
+	
+	sum(3,5);
+	
+	//*p =>*&sum =>sum
+	
+	(*p)(2,5);
+	
+	p(3,5);
+	
+	*p 《=》 p  指向的那个函数
+	
+通过函数指针去调用指向的函数，有两种方式
+	（1）(*函数指针变量名)(实参列表);
+	（2）函数指针变量名(实参列表);
+	
+	
+指针函数
+	int*func()
+	{
+		
+	}
+	
+作业：
+	1.实现strcpy/strncpy,strcat,strcmp
+	
+	char* strcpy(char*dest,char*src)
+	{
+		char *p = dest;
+		while(*src)    //while(*p++ = *src++);
+		{
+			*p = *src;
+			p++;
+			src++;
+		}
+		
+		*p  = *src;
+		
+		return dest;
+	}
+	
+	===
+	 char * strncpy(char *dest, const char *src, size_t n)
+	   {
+		   size_t i;
+
+		   for (i = 0; i < n && src[i] != '\0'; i++)  
+			   dest[i] = src[i];
+			   
+		   for ( ; i < n; i++)
+			   dest[i] = '\0';
+
+		   return dest;
+	   }
+
+	   
+	   ======
+	 char * strcat(char *dest, const char *src)  
+	 {
+		char*p = dest;
+		while(*p)
+		{
+			p++;
+		}
+		while(*src)
+		{
+			*p = *src;
+			p++;
+			src++;
+		}
+		*p = *src;
+		
+		return dest;
+	 }
+	 
+	 ======
+	int strcmp(char *s1,char *s2)
+	{
+		while(1)
+		{
+			if(*s1 > *s2)
+			{
+				return 1;
+			}
+			else if(*s1 < *s2)
+			{
+				return -1;
+			}
+			else
+			{
+				if(*s1 == '\0')
+				{
+					return 0;
+				}
+				s1++;
+				s2++;
+			}
+		}
+		
+	}
+	
+====================
+
+void (*a[3])(int,int);//定义了函数指针数组，有3个元素，
+						//每个元素都是函数指针类型
+						//这个指针指向的那个函数是没有返回值，带两个int型的参数
+		
+13.二级指针以及多级指针 8.c
+	int a;
+	可以定义一个指针变量p来保存a的地址
+	
+	typeof(a)*p;
+	int*p;
+	
+	p = &a; //*p <=>a
+	
+	p本身有地址，定义一个指针变量p1来保存p的地址
+	
+	typeof(p)*p1;// 指向的类型  *指针变量名
+	
+	int**p1;// p1是一个二级指针，他保存的是一个一级指针的地址
+				//对于到底是几级指针，不用管
+					//	（只要知道他是一个指针，并且保存的是谁的地址）
+					
+	p1 = &p;//p1是指向p
+	
+	*p1 => *&p =>p
+	*p =>*&a =>a
+	
+	**p1 =>**&p =>*p =>*&a =>a
+						
+	**p1 = 1024;//a = 1024;
+	
+14.动态内存分配函数
+	malloc/realloc/calloc
+	free
+	
+	NAME
+       malloc, free, calloc, realloc - allocate and free dynamic memory
+
+SYNOPSIS
+       #include <stdlib.h>
+		
+		malloc用来动态分配分配一个size大小的内存空间，并且把这块空间的首地址返回。
+		malloc分配的空间的生存期，随进程的持续性
+		malloc分配的空间一旦分配，不会自动释放，一定要手动释放，调用free()
+       void *malloc(size_t size);
+		size：要分配的空间大小（以字节为单位）
+	   
+	   返回值：
+		void* 返回这个空间的首地址
+		失败 返回NULL
+		size == 0,返回NULL
+		
+		int*p = malloc(4);
+		
+			p指向一个4个字节大小的空间
+				p+1
+		malloc的这四个字节的空间，只能p去访问。
+		int a;
+		p =&a;
+			malloc的四个字节的空间，是不是访问不了。又不能释放，又不能分配给别人
+			这样的内存就成为“垃圾内存”。这种现象称为“内存泄漏”
+		
+		free就是用来释放ptr指向的内存
+       void free(void *ptr);
+		ptr指向的内存必须是malloc/realloc/calloc这三个函数申请的内存
+			free(p);
+			
+		int a;
+		free(&a);//error
+		
+		calloc作用与malloc类似，只不过它是相当于数组空间分配函数，
+			他带两个参数，n表示又多少个元素，size表示内个元素所占的字节数
+			所以他分配的总大小n*size.
+			并且calloc分配的空间，会把空间里面的内容全部置0
+       void *calloc(size_t nmemb, size_t size);
+	   
+			int*p = calloc(3,5);
+	   
+		realloc是用来把ptr（必须是malloc/realloc/calloc这三个函数申请的内存）指向的内存空间
+			扩展到size大小
+       void *realloc(void *ptr, size_t size);
+	   
+			ptr == NULL
+				realloc(NULL,size) <=>malloc(size)
+				
+			ptr != NULL
+				1. size > 原来的大小
+					realloc用来把ptr指向的内存，扩大到size字节，原来前面的内容保持不变
+						，后边新增的内容不会初始化
+						
+				2.size == 0
+					realloc(ptr,0) <=>free(ptr)
+					
+				3.size < 原来的大小
+					结果是未定义
+					
+15.数组作为函数的参数
+	当数组作为函数的参数时候，数组当成是一个指针
+	形参如何定义？
+	
+	（1）int a[10];
+	
+		func(p)
+		{
+			
+		}
+		
+		func(a); // p = a;
+				=>p的类型应该与a的类型一致，至少是兼容，才能够赋值
+				=>此处a的类型应该是当做是一个指针来看，数组名就是首地址
+				
+				p = a;//p = &a[0]
+					typeof(p) =>typeof(a[0])*
+							=> int*
+							
+				p是数组名 =>int p[]
+				
+			
+	func( int*p)
+	{
+		p[3] <=> a[3]
+	}
+	
+	or
+	
+	func( int p[])
+	{
+		p[3] <=> a[3]
+	}
+	
+	
+	(2)int b[3][4];
+
+	func(p)
+	{
+	}
+	
+	func(b)// p=b;此处b当做是一个指针来看   &b[0]
+	
+			p = &b[0]
+				
+				typeof(b[0])*
+				=>int[4]*
+				
+			int[4]*p;
+			=>int(*p)[4]
+			
+		int p[][4] =>p是一个数组名
+		
+	
+	func(int(*p)[4])
+	{
+		p[0][1] <=>b[0][1]
+	}
+	
+	or
+	
+	func(int p[][4])
+	{
+		p[0][1] <=>b[0][1]
+	}
+
+	
+16. main 函数的形式参数问题
+
+	int main(int argc,char*argv[])//char*argv[]=>char**argv
+	{
+		
+	}
+	=>char *argv[] =>char**argv
+	
+		typeof(&argv[0])
+			=>typeof(argv[0])*
+			=>char**argv
+	
+	在Linux下面，程序运行的时候，允许带参数。只不过所有的参数都当做是字符串来处理
+	所以c程序的main里面可以带两个形式参数，第一个argc 表示命令行参数的个数
+	第二个参数是一个字符串指针数组，里面的每一个元素都是一个参数字符串
+	
+	编辑一个源代码main.c
+		gcc main.c -o main
+		
+		./main test argv 12345
+		
+		argv[2][2]
+		
+		
+总结：
+	（1）
+		指向：
+			p保存a的地址，p指向a
+		p指向的类型就是a的类型
+		
+		指针变量的定义：
+			指向的类型 *指针变量名
+			
+		一个指针的类型
+			typeof(指针变量名) =》指向的类型*
+			
+		&x  => 指针 ，因为他保存的是a的地址
+				这个指针的类型
+					typeof(x)*
+					
+	(2)
+		*(地址) 《=》地址对应的那个对象（变量，数组，函数）
+		
+			*&a <=> a
+			
+	(3)	
+		*(a+i) <=> a[i] i >=0
+		
+			eg:
+				p[3][4] => *(p[3]+4)
+						=>*(*(p+3)+4)
+						
+	(4)指针作加减的问题
+		p+i(p是一个指针，i是一个整数)，加减i个指向单元的长度
+		
+	(5)数组名可以看做是指向数组第一个元素类型的常量指针，数组名在数值上为第一个元素的地址
+	
+			数组名：
+				（1）代表整个数组
+				
+				（2）当做指针来看
+				
+					a+i
+					
+					
+	

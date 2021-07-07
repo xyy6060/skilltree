@@ -1,0 +1,112 @@
+栈和队列
+	栈（stack）是限定在仅在表尾进行插入和删除操作的线性表
+		栈是一种思想 ，“先进后出，后进先出”
+		
+	栈顶（top）：进行插入和删除操作的那一端
+	栈底（Bottom）
+	
+栈的实现：
+	要实现的栈的基本操作：
+	InitStack() : 初始化一个栈
+	DestroyStack() :销毁一个栈
+	ClearStack()  :清空一个栈
+	IsEmptyStack() :判断是否为空栈
+	LengthStack() :栈的长度，返回的栈的元素个数
+	GetTop()  :返回栈顶元素，但是不出栈
+	Pop()   :出栈
+	Push() :入栈
+	
+	顺序栈
+		用地址连续的内存空间来依次存储栈中的每一个元素
+		
+			“数组”
+		typedef char ElemType;
+		#define MAX 100
+		struct SqStack	
+		{
+			ElemType data[MAX];
+			int top;//用来表示栈顶元素的下标
+					//top == -1表示栈中没有元素
+		};
+		
+		
+	
+	链式栈
+		不用地址连续的内存空间来依次存储栈中的每一个元素，额外开辟空间
+			来保存“逻辑关系”上的上一个或下一个
+			
+			“链表”
+	typedef char ElemType;
+	struct node
+	{
+		ElemType data;
+		struct node*next;
+		struct node*prev;
+	};
+	struct LinkedListStack	
+	{
+		struct node*bottom;//栈底
+		struct node*top;//栈顶
+		int num；
+		//...
+	};
+			
+			
+	练习：有5个元素，其入栈次序依次为ABCDE，在各种可能的出栈次序中，
+			第一个出栈元素为C且第二个出栈元素为D的出栈序列有几种
+			
+			
+			
+队列：
+		是一种先进先出（FIFO：First In First Out）的线性表
+		它只允许在表的一端进行插入，另一端进行删除操作
+		
+		队头（front）：允许删除的一端叫队头
+		队尾（rear）：允许插入的一端叫队尾
+		
+	队列的实现：
+	要实现的队列的基本操作：
+	InitQueue() : 初始化一个队列
+	DestroyQueue() :销毁一个队列
+	ClearQueue()  :清空一个队列
+	IsEmptyQueue() :判断是否为空队列
+	LengthQueue() :队列的长度，返回的队列的元素个数
+	GetHead()  :返回队列头元素，但是不出队列
+	DeQueue()   :出队列
+	EnQueue() :入队列	
+			
+	顺序队列：
+		用一组用地址连续的内存空间来依次存储队列中的每一个元素
+		
+			“循环队列”
+	typedef char ElemType;		
+	struct SqQueue
+	{
+		ElemType*data;
+		int rear;//队尾下标
+		int front;//队头下标
+		int max_len;//数组的最大长度
+		int num;//队列中元素个数
+	};
+			
+			
+	链式队列：
+		不用地址连续的内存空间来依次存储队列中的每一个元素		
+	
+		带头节点的单向链表
+		
+	typedef char ElemType;
+	struct node//数据节点
+	{
+		ElemType data;
+		struct node *next;
+	}; 	
+	
+	struct LinkedQueue//链式队列
+	{
+		struct node*front;//队头
+		struct node*rear;//队尾
+		int num;//队列元素个数
+	};
+	
+			

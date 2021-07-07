@@ -1,0 +1,607 @@
+交叉开发
+	
+1.交叉编译：
+	1.编辑代码  main.c
+	2.编译代码  gcc main.c -o main
+		
+			编译：把一个人能看懂的代码，翻译生成机器能够看懂的代码
+			
+	3.运行代码
+			./main
+			
+	交叉编译：
+		在一种环境下编译生成另外一种环境的程序
+		
+			编译环境 ：linux
+			
+			运行环境 ：arm
+			
+2.工具链
+	（1）串口工具
+		SecureCRT （Windows）
+		
+		
+		minicom  (Linux)
+		
+SecureCRT	：
+
+	1.创建快捷方式
+	2.双击打开
+	3.连上串口线
+	4.打开设备管理器，查看通信端口号
+	6.
+		文件=》快速链接
+		协议：serial
+		端口：
+		波特率：115200
+		数据位：8
+		奇偶校验位：none
+		停止位：1
+		
+		右边的流控去掉
+		
+		点击链接
+	
+	（2）刷机
+		fastboot =>安卓专用的刷机命令
+		
+		在开发板开机启动前5s按下空格键，让开发板进入到uboot界面命令行模式
+		
+		GEC6818#fastboot
+		
+		
+		看一下驱动有没有安装，没有，则安装
+		
+		有执行下一步：
+			双击GEC6818-img 环境中（auto.bat）文件进行刷机
+			
+			完成后，启动前5s按下空格键，让开发板进入到uboot界面命令行模式
+			然后输入：
+			setenv bootcmd "ext4load mmc 2:1 0x48000000 uImage;bootm 0x48000000"
+			setenv bootargs "lcd=at070tn92 tp=gslx680-linux root=/dev/mmcblk0p2 rw rootfstype=ext4"
+			setenv ubootpak 1
+			setenv boot 1
+			setenv system 1
+			setenv userdata 0
+			setenv cache 0
+			saveenv
+			
+			出现
+				Saving Environment to MMC...
+				Writing to MMC(2)... done
+				
+			之后输入：
+				boot
+				
+	（2）修改开发板的启动脚本
+		1.在开发版的/etc/init.d/目录下，建立一个文件 Start.sh
+		内容如下：
+			#! /bin/bash
+
+			ifconfig eth0 down
+			ifconfig eth0 hw ether 08:90:00:A0:46:71(xxx)
+			ifconfig eth0 192.168.31.71(xxx) netmask 255.255.255.0 up
+
+
+			telnetd &
+			
+		2.同样的可以在PC机上创建一个文件 Start.sh，下载到开发板/etc/init.d
+		
+			在SecureCRT 终端上执行命令：
+				cd /etc/init.d
+				rx  Start.sh  => 传输  =》发送Xmodem
+				
+		3.直接修改开发板的配置文件
+			vi /etc/init.d/rcS
+			
+			在最后加入
+			
+			ifconfig eth0 down
+			ifconfig eth0 hw ether 08:90:00:A0:46:71
+			ifconfig eth0 192.168.31.71 netmask 255.255.255.0 up
+
+
+			telnetd &
+			
+			保存，退出之后重启 reboot
+			
+			重启之后用ifconfig去查看ip
+			
+		
+	
+3.下载程序到开发板上运行
+	3.1 用RC232串口传输
+		Xmodem/Ymodem/Zmodem
+		
+		传输速度慢
+		
+	串口：是一种通信IO接口，进行数据传输的是以bit位为单位
+	
+	多个设备在使用串口进行通信的时候需要设置串口的参数：波特率，数据位，奇偶校验位
+	
+	3.2 u盘
+	
+	
+	3.3 网络传输
+		ftp/tftp/nfs
+		
+4.交叉编译程序
+	4.1
+		把压缩包拷贝到共享目录下
+	
+		然后解压
+		
+		在压缩包所在的目录下解压
+		sudo tar -jxvf arm-2014.05-29-arm-none-linux-gnueabi-i686-pc-linux-gnu.tar.bz2 -C /usr/local/arm/
+
+		cd arm-2014.05/bin
+		
+		ls
+		会看到很多以arm-none-linux-gnueabi-为前缀的文件，这些都是交叉编译工具
+		
+	4.2 建立软链接
+		sudo ln -s arm-none-linux-gnueabi-gcc arm-linux-gcc
+	.....
+	
+		把myln.sh  拷贝到/usr/local/arm/arm-2014.05/bin 
+		
+		在/usr/local/arm/arm-2014.05/bin下 执行myln.sh文件
+		
+		sudo ./myln.sh
+	
+	4.3 交叉编译程序
+		编辑程序：main.c
+		编译代码：/usr/local/arm/arm-2014.05/bin/arm-linux-gcc main.c -o main
+		
+		在CRT里面执行的命令
+		rx main
+		chmod +x main
+		./main
+		
+	4.4 修改环境变量
+		export PATH=$PATH:/usr/local/arm/arm-2014.05/bin/
+		
+		cd ~
+		vim .bashrc	
+		(仅对用户有效)
+		
+		加到 /etc/profile 文件中的最后一行，然后重启
+		（对系统中所有用户都有效）
+	
+	
+5.常用服务
+	tftp和ftp 都是用来传输文件的一种协议
+	
+	tftp 实现的时候才用的UDP协议
+	ftp  实现的时候才用的TCP协议
+	
+	
+	tftp :sudo apt-get install tftpd-hpa
+	ftp  :sudo apt-get install ftpd
+	nfs  :sudo apt-get install nfs-server
+	
+	samba :sudo apt-get install samba
+		是用来在unix/linux之间共享文件的
+		
+	samb服务器：
+		启动：sudo service samba start
+		重启：sudo service samba restart
+		停止：sudo service samba stop
+		
+	配置文件
+		sudo vim /etc/samba/smb.conf
+		
+		comment = 备注信息
+		path = 共享目录的绝对路径
+		writeable = yes  可写
+		browseable = yes  可以浏览
+		guest ok = yes  允许匿名访问
+		
+		
+
+tftp:只能传输文件
+	
+	启动：sudo service tftpd-hpa start
+	重启：sudo service tftpd-hpa restart
+	停止：sudo service tftpd-hpa stop
+		
+	
+	1. sudo apt-get install tftpd-hpa
+	
+	2.配置文件
+		sudo vim /etc/default/tftpd-hpa
+		
+		TFTP_USERNAME = "tftp"
+		TFTP_DIRECTORY = "/home/gec/tftp"
+		TFTP_ADDRESS = "0.0.0.0:69"
+		TFTP_OPTIONS = "-l -c -s"
+		
+		保存退出
+		
+	3.建立tftp服务目录
+		cd ~
+		mkdir tftp
+		chmod 777 tftp
+		
+	4.
+		启动tftp服务器
+		
+		sudo service tftpd-hpa restart	
+		
+		tftpd-hpa stop/waiting
+		tftpd-hpa start/running, process 5282
+		
+	5.
+		把下载的文件放到/home/gec/tftp
+	
+	6.	
+		tftp -g -r main 192.168.31.171 
+		通过tftp的网络服务从服务器192.168.31.171 获取-g (get)
+		一个远程（-r）的文件，文件名为main
+		
+		tftp -p -l 1.c 192.168.31.171
+		通过tftp的网络服务从上传(-p put)本地文件 (-l local)文件名 1.c
+		给服务器192.168.31.171 
+		
+		
+=======================
+gcc的编译过程
+	（arm-linux-）gcc main.c -o main
+		一步到位？
+		
+		
+	预处理（preprocessing）（处理c程序中以'#'开头的行）
+		（arm-linux-）gcc -E main.c -o main.i
+		
+	=>此时mian.i还是一个c源代码文件	
+		
+	（1）头文件包含命令
+	
+		1.为什么需要头文件
+			
+		2.#ifndef
+		  #define
+		  
+		  #endif
+		  这三个命令的作用
+		  
+		3. "" 和 <>的区别
+			搜索路径不一样
+			
+			<>  :系统指定的标准的头文件搜索路径
+			
+				INCLUDE:=/usr/include:/include
+			
+			""  :
+		  
+	
+	（2）宏定义  =>替换
+		
+		
+			#define max(a,b)  ((a) >(b) ? (a) : (b)) 
+			
+			int a = 5;
+			max(a++,4)
+			
+			((a++) > (4))   (a++)
+			
+			
+			正确形式：
+				#define max((a),(b))  ({ 
+										typeof(a) _a = a;
+										typeof(b) _b = b;
+										(_a) >(_b) ? (_a) : (_b);
+										
+									}) 
+			
+	
+	（3）条件编译
+		#if 0	
+		
+		#endif
+		====
+		#if  #else  #endif
+		===
+		#define W  1
+		#ifdef  W
+			XXXX
+		#endif
+		===
+		#ifndef W
+			XXXX
+		#endif
+
+	
+	
+	==========
+	编译（compiling）  （把c程序编译生成汇编程序）  c  ->asm
+	
+		（arm-linux-）gcc  -S main.c(main.i) -o main.s
+		
+			=>main.s是一个汇编指令文件
+			
+	=======
+	汇编（assembling） (把汇编的程序编译生成一个目标文件)  （机器指令文件）
+	
+		（arm-linux-）gcc  -c main.s -o main.o
+		（arm-linux-）as   main.s -o main.o
+		
+		=>main.o是一个二进制文件（不能执行，可以重定位的文件）
+		
+	=====
+	链接（linking）	（把各个目标文件链接生成一个可执行文件。把各个.o文件的数据段，合在一块）
+	
+		（arm-linux-）gcc  main.o xxx.o  yyy.o -o main
+		
+		
+==============
+gdb的调试程序
+	gdb是一个单步调试命令，他可以使你的程序，在输入命令后才运行可以可以打印中间变量的值
+	
+	gcc -g test.c -o test
+		-g ：表示在编译过程中，他可以使你的程序加入调试信息，以便用于gdb调试
+	
+
+	gdb  test
+
+	gdb调试命令：
+	(gdb) r 
+		run 运行代码
+		
+	(gdb) b  number
+	
+			break  用于设置断点（程序执行到断点处就会暂停，用户输入命令才会再次运行）
+			
+				b  line_number   =>设置多少行为一个断点
+				
+				b  函数
+				
+	 (gdb) info b
+		查看断点的情况
+	
+	(gdb) n
+		next 下一步
+			单步运行
+			
+	(gdb) s
+		step 下一步
+			单步运行
+			
+			n和s 区别 ：仅在函数调用时有区别
+				n  是把函数调用当做一步走，直接把函数调用运行完
+				
+				s  step into 会进入到函数内部去执行
+	
+	(gdb)p i
+		打印变量i的值
+			
+	(gdb)l
+		list 查看源文件
+		
+	(gdb)help [command]
+		查看gdb中某命令的帮助文件
+		
+	(gdb) delete breakpoint 断点号
+	
+	(gdb)q	
+		
+===============
+库：动态库和静态库
+	库是一种代码的二进制的封装形式
+	
+	源代码可以直接调用，但是又看不到它的源代码（因为库是二进制）
+	
+	库的这种有利于模块化，只要接口设计的合理，改变库的实现,不影响库的代码
+	
+	(1)动态库
+		动态库的使用步骤
+		（1）编辑源代码
+		
+			xxx.c   功能函数的实现
+			xxx.h   函数及数据类型的等说明
+			
+		（2）生成动态库
+			(arm-linux-)gcc -shared     -fpic      -o  		libxxx.so       xxx.c
+							生成动态库   与位置无关			生成库的名称
+							
+	==============
+		（3）把库和头文件拿到
+			main.c    =>libxxx.so 里面的函数
+			
+			-I 接一个目录名，指定头文件的搜索路径  可以接多个-I
+			-l 指定一个库的名字，可以接多个-l
+			-L 指定库的搜索路径
+			
+			(arm-linux-)gcc  main.c -o main -I/头文件的路径  -L/接库文件的路径 -lxxx
+			
+			生成的main这个可执行文件，并没有把libxxx.so的内容包含进来，它仅仅只是标记
+			了一下我的这个main可执行文件，用到了这个libxxx.so的一些相关的功能代码
+			
+			
+			运行的时候就会找这个库文件
+			
+			加载库的搜索路径，设置环境变量
+			export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/mnt/hgfs/CS19167/第一阶段/交叉开发/code/动态库
+			
+		(4)把可执行文件放到板子上运行
+			
+			
+			arm开发板环境变量指定的库的目录
+			/lib/
+			
+			
+	(2)静态库
+		1. 假设  a.c  a.h
+				b.c  b.h
+				
+		2.把各个源代码编成.o文件
+			(arm-linux-)gcc -c a.c -o a.o
+			(arm-linux-)gcc -c b.c -o b.o
+
+		3.用ar 的命令把所有的.o文件生成一个静态库
+			(arm-linux-)ar  -rc libxxx.a  a.o b.o 
+			
+	=============
+		4.把头文件和库文件给别人
+		
+		main.c   =>libxxx.a里面的函数
+		
+		-I 接一个目录名，指定头文件的搜索路径  可以接多个-I
+		-l 指定一个库的名字，可以接多个-l
+		-L 指定库的搜索路径
+			
+		(arm-linux-)gcc  main.c -o main -I/头文件的路径  -L/接库文件的路径 -lxxx
+			
+			生成的main这个可执行文件，直接把静态库libxxx.a这个文件里面的所有内容全部都编
+			到可执行文件中
+			
+		./main
+		
+		5.若要到板子上运行直接下载可执行文件
+		
+	==================
+	make及Makefile?
+		
+		Makefile是make的一个配置文件
+		
+		1.什么是make？
+			make是一个智能化自动编译的工程管理工具。它可以决定在一个工程下哪些文件需要被编译
+				哪些文件不需要被编译，而且知道如何去编译
+				
+		Makefile是make的一个配置文件，文本文件，make的工作是离不开Makefile
+		
+		====
+		2.Makefile的文件格式是？
+			TARGER:PREREQUISITS
+			<tab>RECIPE
+			<tab>...
+			
+			  
+			TARGER ：目标名   通常要生成的文件名
+			PREREQUISITS:
+				依赖文件   第一步看目录下是否有依赖文件
+							如果没有依赖文件就去看 Makefile中是否有“依赖文件”的目标,如果有，就会去生成它
+			
+			RECIPE	 ：make要执行的命令		
+			
+		
+		make会比较 targets 文件和 prerequisites 文件的修改日期，如果 prerequisites 文件的
+		日期要比 targets文件的日期要新，或者 target 不存在的话，那么，
+		make 就会执行后续定义的命令
+			
+		========
+		
+		make 目标名
+			make首先在当前目录下去找Makefile，然后在到该文件中去找“目标名”
+				在找它的依赖文件，....在执行达到这个目标的命令
+				
+		make 也可以不加目标名，默认找Makefile中第一个目标去完成
+		
+			eg：
+				main.c:
+					touch main.c
+					
+				MAIN:main.c
+					gcc main.c -o MAIN
+					
+				=> make
+				
+				
+		==========
+		3.Makefile中的变量
+			在Makefile中可以定义变量，但是Makefile中的变量没有类型，都当做字符串来处理
+			
+			引用变量  $(变量名)  引用变量=》引用变量的值
+			
+			在Makefile中，给变量赋值的4中情况
+			
+			（1）简单赋值  :=  "就地赋值"
+					A := 123
+					B := $(A)
+					
+			（2）递归赋值  =  "向后展开赋值"
+					A := 123
+					B := $(A)
+					C = $(A)
+					A := 456
+					
+					
+					xx:
+						echo $(A)
+						echo $(B)
+						echo $(C)
+						
+			（3）追加赋值  +=
+				A += 555
+				
+					=>  A := $(A) 555 
+					
+			（4）条件赋值  ?=
+					当变量没有定义或没有值的时候，才能赋值成功
+					
+					A ?= a.out
+					
+		自动变量：make内置的变量
+			$@  :目标文件的完整名称
+			$+  :所有的依赖文件，以空格隔开，可能会包含重复的依赖文件
+			$<	:第一个依赖文件的名称
+			$?	:所有时间戳比目标文件晚的依赖文件，以空格隔开
+			$^	:所有不重复的依赖文件，以空格隔开
+			
+		eg:
+			xxx.exe:a.o b.o c.o a.o
+				gcc $^ -o $@
+				
+			a.o:a.c
+				gcc -c $^ -o $@
+				
+				
+		makefile通配规则
+			%.o:%.c
+				gcc -c $^ -o $@
+				
+		Makefile的内置函数
+			
+			在Makefile中允许定义并调用函数
+
+			调用自定义或内置函数	
+				调用函数的格式 ：$(函数名 函数参数列表)
+				
+			wildcard :文件名展开函数，展开成一系列所有符合你的参数描述的文件名
+					文件名以空格隔开，返回展开后文件名的列表
+					
+			只带一个参数 指定文件名的通配方式
+			
+				$(wildcard *.c)
+				
+			patsubst  :模式字符串替换函数
+				$(patsubst <from><to><text>)
+					把原始字符串<text>中<from> 替换成<to>
+					
+			$(patsubst %.c,%.o,"1.c 2.c 3.c")
+			
+						=>"1.o 2.o 3.o"
+						
+作业：
+	1.  在一个路径下有一个 main.c
+		然后把加减乘除 写出4个.c 和 4个.h 
+		
+		用 make去进行编译 生成一个可执行文件，要下载到板子上运行
+		
+	2. 在一个路径下有一个 main.c
+		然后把加减乘除 写出4个.c 和 4个.h 
+		把 
+		加减乘除4个.c  生成一个动态库，生成完之后把4个.c删除
+		用 make去进行编译 生成一个可执行文件，要下载到板子上运行
+		
+				
+		
+				
+					
+	
+			
+		
+	
+		
+			  
+			

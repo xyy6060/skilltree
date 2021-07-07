@@ -1,0 +1,353 @@
+文件属性
+(1)	stat
+	NAME
+       stat, fstat, lstat - get file status
+
+		 stat, fstat, lstat这三个函数都是用来获取文件的状态信息
+		 Linux下面有一个结构体struct stat用来描述文件的状态
+		  struct stat {
+               dev_t     st_dev;     /*容纳该文件的那个设备的设备号 */
+               ino_t     st_ino;     /* 该文件的inode number */
+               mode_t    st_mode;    /*文件权限位（包含文件权限）*/
+								st_mode包含文件的类型和权限，用位域实现
+						eg:		struct stat st;
+								st.st_mode
+								
+								 S_ISREG(st.st_mode)   为真 就表示这个文件是一个普通文件regular file
+
+							   S_ISDIR(st.st_mode)  					目录directory  d
+
+							   S_ISCHR(st.st_mode)  					字符设备character device  c
+
+							   S_ISBLK(st.st_mode)  					块设备block device    b
+
+							   S_ISFIFO(st.st_mode) 					管道FIFO (named pipe)     p
+
+							   S_ISLNK(st.st_mode)  					符号链接 symbolic link l
+
+							   S_ISSOCK(st.st_mode) 					套接字socket   s
+	
+						权限位：
+							   S_IRWXU    00700     mask for file owner permissions
+							   S_IRUSR    00400     owner has read permission
+							   S_IWUSR    00200     owner has write permission
+							   S_IXUSR    00100     owner has execute permission
+							   S_IRWXG    00070     mask for group permissions
+							   S_IRGRP    00040     group has read permission
+
+							   S_IWGRP    00020     group has write permission
+							   S_IXGRP    00010     group has execute permission
+							   S_IRWXO    00007     mask for permissions for others (not in group)
+							   S_IROTH    00004     others have read permission
+							   S_IWOTH    00002     others have write permission
+							   S_IXOTH    00001     others have execute permission
+					
+						if(st.st_mode  & S_IRGRP)
+						{
+							在st_mode设置了S_IRGRP这个bit位
+						}
+    
+					
+               nlink_t   st_nlink;   /* 该文件的硬连接数 */
+               uid_t     st_uid;     /* 文件所有者的ID */
+               gid_t     st_gid;     /* 文件的所有者的组ID */
+               dev_t     st_rdev;    /* 设备号 (if special file 假如这个文件是一个设备) */
+               off_t     st_size;    /*文件内容的大小 */
+										//普通文件 ：文件内容的大小
+										//符号链接：指向的那个文件的文件名大小
+										//目录文件的内容：目录项数组
+										
+               blksize_t st_blksize; /* 块大小（与具体硬件相关） */
+               blkcnt_t  st_blocks;  /* 在Linux下约定512b为一块*/
+               time_t    st_atime;   /* 最后访问时间  “文件内容” */
+               time_t    st_mtime;   /* 最后修改的时间  “文件内容”*/
+               time_t    st_ctime;   /* 最后修改的时间  “文件属性”*/
+           };
+
+		   
+
+SYNOPSIS
+       #include <sys/types.h>
+       #include <sys/stat.h>
+       #include <unistd.h>
+
+		stat是用来获取path指定的文件的状态信息，获取的信息保存到buf所指向的内存空间中
+       int stat(const char *path, struct stat *buf);
+	   path :要获取文件信息的文件名（带路径）
+	   buf:指向的结构体用来保存文件的状态信息的
+	   
+	   返回值：成功返回0
+				失败返回-1.同时errno被设置
+	   
+	   fstat是用来获取文件的状态信息，只不过，fstat需要一个文件描述符来指定一个文件。
+	   返回值和stat一样
+       int fstat(int fd, struct stat *buf);
+	   
+	   
+	   
+	   lstat功能与stat一样，当path是一个符号链接，lstat获取的是符号链接文件本身的状态
+	   stat是获取的符号链接文件指向的那个文件的状态信息
+       int lstat(const char *path, struct stat *buf);
+	   
+	   
+	  eg:
+		利用stat, fstat, lstat来获取文件的大小
+		
+		int main()
+		{
+			struct stat buf;
+			int r = stat("1.txt",&buf);
+			
+			printf("size = %ld",buf.st_size);
+		
+		}
+		
+=========
+(2)获取进程的当前的工作目录
+	getcwd
+	
+	NAME
+       getcwd, getwd, get_current_dir_name - get current working directory
+
+SYNOPSIS
+       #include <unistd.h>
+	   
+	   getwd是用来获取进程当前工作目录的绝对路径，保存在buf所指向的内存空间中
+		char *getwd(char *buf);
+		
+		返回值 ：返回当前工作目录字符串的首地址
+					失败返回NULL，同时errno被设置
+					
+		getwd有一个bug，“越界”
+	
+       char *getcwd(char *buf, size_t size);
+			buf：使用来保存获取到的当前的工作目录的绝对路径
+			size:指定buf所指向的空间的大小
+					如果获取到的前的工作目录的绝对路径大小大于size-1,这个函数就会报错
+     返回值 ：返回当前工作目录字符串的首地址
+					失败返回NULL，同时errno被设置
+		
+		
+		 get_current_dir_name是用来获取进程当前工作目录的绝对路径，
+		 只不过它在函数内部自动malloc足够长的空间来存储当前工作目录的绝对路径
+		 所有为了防止内存泄漏，所以要手动free
+		 
+       char *get_current_dir_name(void); 
+			  返回值 ：返回当前工作目录字符串的首地址
+					失败返回NULL，同时errno被设置
+					
+========
+	 改变进程的当前的工作目录
+		chdir 
+		NAME
+       chdir, fchdir - change working directory
+
+SYNOPSIS
+       #include <unistd.h>
+
+		chdir/fchdir是用来改变进程的当前的工作目录
+		chdir :需要一个路径字符串来表示你要更改的目录的名字
+		fchdir：需要一个文件描述符来表示要更改的目录
+       int chdir(const char *path);
+       int fchdir(int fd);
+	   
+	   返回值：成功返回0
+				失败返回-1，同时errno被设置
+	   
+========
+	文件截短
+		truncate
+		
+NAME
+       truncate, ftruncate - truncate a file to a specified length
+
+SYNOPSIS
+       #include <unistd.h>
+       #include <sys/types.h>
+
+		truncate/ ftruncate是用来给一个指定的文件截短到指定的长度
+       int truncate(const char *path, off_t length);
+       int ftruncate(int fd, off_t length);
+	   
+	   
+	   length < 原来的长度  =》截短
+	    length > 原来的长度  =》扩展  留空洞
+		
+	On  success,  zero is returned.  On error, -1 is returned, and errno is
+       set appropriately.
+===========
+	删除一个文件
+		unlink : 删除一个文件
+		remove： 删除一个文件或目录
+
+		rmdir ：删除一个空目录
+		
+		#include <unistd.h>
+		int unlink(const char*pathname);
+		int remove(const char*pathname);
+		int rmdir(const char*pathname);
+		
+	On  success,  zero is returned.  On error, -1 is returned, and errno is
+       set appropriately.
+	   
+==========
+	mkdir
+	
+	NAME
+       mkdir - create a directory
+
+SYNOPSIS
+       #include <sys/stat.h>
+       #include <sys/types.h>
+
+       int mkdir(const char *pathname, mode_t mode);
+	   
+	 On  success,  zero is returned.  On error, -1 is returned, and errno is
+       set appropriately. 
+	   
+============
+目录操作
+	目录文件的内容：
+		目录项数组
+	
+	目录项是什么：
+		struct dirent
+		
+	如果我们拿到一个目录下面的层次关系，必须要去读这个目录
+	
+
+	对目录的操作
+	
+	（1）打开目录
+		NAME
+       opendir, fdopendir - open a directory
+
+SYNOPSIS
+       #include <sys/types.h>
+       #include <dirent.h>
+
+		opendir:用来打开name指定的目录
+       DIR *opendir(const char *name);  
+	   
+	   fdopendir:用来打开fd所在的那个目录
+       DIR *fdopendir(int fd);
+		返回值：成功返回一个指向DIR的指针
+				失败返回NULL，同时errno被设置
+		
+	
+	（2）读这个目录
+		readdir
+NAME
+       readdir - read a directory
+
+SYNOPSIS
+       #include <dirent.h>
+		readdir是用来从dirp指向的目录中读取下一个目录项（struct dirent）,
+		并返回拿到的目录项的地址
+		
+		对于一个目录文件里面有多个目录项，每调用一次就会获取下一个目录项的指针，直到返回NULL
+       struct dirent *readdir(DIR *dirp);
+	   
+		struct dirent*dirent = readdir(dirp);
+		
+       struct dirent {
+               ino_t          d_ino;       /* 该目录项指向的那个文件的inode号 */
+               off_t          d_off;       /* 目录项偏移 */
+               unsigned short d_reclen;    /* 该结构体的长度 */
+               unsigned char  d_type;      /* 该目录项指向的那个文件的类型 */
+								  DT_BLK      This is a block device.
+
+								   DT_CHR      This is a character device.
+
+								   DT_DIR      This is a directory.
+
+								   DT_FIFO     This is a named pipe (FIFO).
+
+								   DT_LNK      This is a symbolic link.
+
+								   DT_REG      This is a regular file.
+
+								   DT_SOCK     This is a UNIX domain socket.
+
+								   DT_UNKNOWN  The file type is unknown.
+								   
+							if(dirent->d_type == DT_CHR)	
+							{
+								该目录项指向的那个文件的类型是字符设备文件
+							}							
+								 
+
+               char           d_name[256]; /* 该目录项指向的那个文件或目录的名字（不带路径）  */
+           };
+
+	  每个目录下都会自动生成两个目录
+		.    =>指向当前目录
+		..   =>指向上一级目录
+		
+	  
+	（3）关闭目录
+	
+		closedir
+		NAME
+       closedir - close a directory
+
+SYNOPSIS
+       #include <sys/types.h>
+
+       #include <dirent.h>
+		closedir是用来关闭dirp所指向的目录
+       int closedir(DIR *dirp);
+	   
+===========
+	eg:求一个目录下有多少个子目录
+		
+		 DIR *dir = opendir(argv[1]);  
+		 if()
+		 {
+			
+		 }
+		 
+		 struct dirent*dirent = NULL;
+		 while(dirent = readdir(dir))
+		 {
+			
+		 }
+		 
+		 
+		 closedir(dir);
+		 
+		 
+作业：
+	1.利用 stat, fstat, lstat 实现 ls -l的功能
+		ls -l 1.txt
+		
+		./a.out 1.txt
+		
+		#include <time.h>
+		
+		char*ctime(const time_t*timep);
+	
+	2.打印一个目录下所有文件的名字
+
+	3.假设一个目录的大小为这个目录下所有普通文件的大小，
+		那么请编写一个程序，计算一个目录的大小
+	
+	
+	4.给定一个目录，给出该目录下所有的图片文件
+		.bmp
+		.jpg
+		
+		图片文件名（绝对路径）用链表保存
+		
+		dir.c
+		linklist.c
+		
+		
+		
+		
+		
+		
+		
+	
+
+	   

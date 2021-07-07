@@ -1,0 +1,431 @@
+1.引入
+	问题域：跟问题本身相关的一些因素，元素，条件等这些
+			分析问题，需求，目标
+			算法思路
+			
+	解决方案域：
+		与具体的解决问题的方式，方法相关的一些因素，条件
+		
+			数学  =》数学方法（公式，方程）
+			
+			C语言  =》算法模型、存储类型、语法...
+			
+	问题域 =》解决方案域
+		要把问题域里面的因素  =》解决方案域的因素
+		
+		“人”  在解决方案域用什么描述
+		
+		建模 ：来描述问题
+		
+		现实世界物体需要抽象成计算机语言中数据类型
+		
+	学生：
+		学号  =>int
+		姓名  =>char[]
+		性别  =>char/int
+		年龄  =>int
+		地址  =>char[]
+		...
+	=>	这些物体的属性组合到一个数据类型中
+		C语言中允许程序员定义自己的组合类型
+			结构体
+			联合体/共用体
+			枚举
+
+2.结构体:自定义的一种组合数据类型
+	2.1
+		定义
+		
+		struct  结构体名
+		{
+			成员类型1 成员名1;
+			成员类型2 成员名2;
+			成员类型3 成员名3;
+			....
+		};
+		
+		结构体名 ：符合C语言中标识符的规定
+			
+			struct  结构体名  =>(你定义的)新类型的名字
+				
+		成员类型 :C语言任意合法的数据类型都可以
+		成员名 :符合C语言中标识符的规定
+		
+	eg:
+		struct student
+		{
+			int num;
+			char name[32];
+			char sex;
+			int age;
+			char addr[32];
+		};
+			
+			=》//定义了一个新类型  struct student
+			这个类型里面包含了5个成员
+			
+			定义一个新类型的变量
+			struct student s;
+			
+			sizeof(s) =>
+			
+	2.2结构体成员的内存布局
+	
+		（1）sizeof(s) =>sizeof( struct student)
+				(a)结构体类型所占内存，是各个成员变量所占内存之和
+				(b) "字节对齐"问题
+					"字节对齐"是从CPU的效率来考虑的。在不同的CPU和编译器下
+						字节对齐的方式不一样
+						
+					（1）要求每个变量的地址必须是4的倍数，4字节对齐
+						struct test
+						{
+							char a;
+							int b;
+						};
+						
+						sizeof(struct test) =>8
+						
+						struct test
+						{
+							char a;
+							int b;
+							char c;
+						};//12
+						
+					（2）要求每个变量按它类型的长度对齐
+					
+						struct test
+						{
+							char a;
+							int b;
+						};
+						
+						sizeof(struct test) =>8
+						
+			在GCC编译器是成员的大小对齐。
+			
+		（2）结构体内各成员变量内存布局
+			以定义时各成员变量出现的次序，依次保存
+			
+	2.3结构体变量的引用
+		访问结构体中成员变量
+		（1）结构体变量名.成员变量名
+		
+			. :域操作符
+			成员变量与普通变量的用法和含义是一样（左右值）
+			s.num = 1;
+			b = s.num;
+			
+			定义一个指针变量p来保存num的地址
+				int*p;
+				p = &(s.num)
+				
+				char*p = s.name;
+				
+				struct student*p = = malloc(sizeof(struct student));
+				(*p) <=>p指向的那个结构体变量
+				
+				(*p).num
+				
+			(2)（*结构体指针）.成员变量名
+				(*p).num = 1;
+				b = (*p).num;
+				
+			(3)
+				结构体指针变量名->成员名
+					p->num = 1;
+					b = p->num;
+					
+					
+	2.4定义并初始化结构体变量
+		结构体的初始化用{}
+		
+		struct birthday
+		{
+			int y,m,d;
+		};		
+		struct student
+		{
+			int num;
+			char name[32];
+			int sex;
+			int score;
+			struct birthday birth;
+			
+		};
+		
+		(1)按定义时的顺序依次初始化各成员变量，用逗号分开
+			struct student s = {
+								1001,
+								"lili",
+								1,
+								100,
+								{1998,1,1}
+								};
+				
+		(2)不按顺序， .成员变量名 = 值
+				可以任意初始化任意个成员变量，不一定要按照顺序
+			struct student s = {
+								.name = "pxl",
+								.birth = {.m = 5}
+								};	
+				
+		(3)结构体数组初始化
+			a. 按照数组元素的顺序依次初始化
+				struct student class[3] = {
+							{ //class[0]
+								1001,
+								"gfuye",
+								1,
+								123,
+								{1998,5,4}
+							},
+							{},// class[1]
+							{}
+					};
+					
+			b.不按照数组元素的顺序，  [下标] = 
+				这种方式，不同的编译器下，情况或限制不一样
+				struct student class[3] = {
+							[1] = {
+									.num = 1001
+								},
+							[2] = {}
+					};
+			
+练习：
+		定义一个结构体数组，从键盘上输入每个结构体的内容
+		struct birthday
+		{
+			int y,m,d;
+		};		
+		
+		struct student
+		{
+			int num;
+			char name[32];
+			int sex;
+			int score;
+			struct birthday birth;
+			
+		};
+		
+2.共用体
+	定义：
+		union 共用体名
+		{
+			共用体类型1 共用成员名1;
+			共用体类型2 共用成员名2;
+			...
+			
+		};
+		
+	共用体和结构体的最大区别：
+		结构体所占的内存大小是各成员变量所占大小之和
+		共用体所占的内存大小是各成员变量所占最大的那个
+				内存是共用的
+				
+	union test
+	{
+		int a;
+		char b;
+		short c;
+		
+	};	
+	
+	sizeof(union test) =>4
+		成员变量a,b,c共用一块内存。
+		当成员变量a,b,c不同时使用时，为了节省内存空间，可以考虑用共用体
+		
+	union test
+	{
+		char a;
+		char b;
+		
+	};	
+
+	union test s;
+	s.a = 'A';
+	// &s.a  == &s.b
+	printf("b = %d\n",s.b);	=>65
+	
+	大端模式  小端模式
+		cpu寄存器按bit位来保存数据，内存是按照字节编号来保存数据
+		
+		大端模式：
+			内存的低地址存放寄存器中的高字节
+			
+		小端模式：
+			内存的低地址存放寄存器中的低字节
+	
+	
+	练习：	
+		运行你的机器，测试你的机器到底是大端模式还是小端模式 3.c
+		union test
+		{
+			int a;
+			char b;
+		};	
+
+		union test s;
+		s.a = 0x12345678;//1
+		if(s.b == 0x78)
+		{
+			printf("是小端模式");
+		}
+		else
+		{
+			printf("是大端模式");
+		}
+		
+3.枚举
+	把该类型变量所有可能的值都列举出来                                         
+	
+	枚举类型用于声明一组可以命名的常数，当一个变量有几种可能的取值的时候
+	
+	int weekday;// 1 2 3 4 5 6 7
+	
+	定义：	
+		enum 枚举类型名{枚举元素的列表};
+		
+	eg:
+		enum weekday{sun,mon,tue,wed,the,fri,sat};
+		
+		enum weekday week = tue;//定义了一个变量并初始化为tue	
+		
+		枚举变量的赋值只能为枚举元素之一
+		
+		枚举元素代表整型的常量，从左至右一次代表 0,1,2,3,4,....
+		
+		定义时可以指定枚举元素的数值，未指定的元素依次从左至右顺序加1（数值可以重复）
+					 0    2       3   4    0      1   2
+		enum weekday{sun,mon = 2,tue,wed,the = 0,fri,sat};
+		
+		enum weekday week = sun;
+		
+		printf("%d %d %d \n",week,tue,sat);//0 3 2
+		
+		
+		enum color{red,green,blue};
+		
+		enum color c = blue;//2
+		
+
+作业：
+	1. 从命令行输入两个加数，获取和
+		./a.out 123 456 
+		
+		123+456 = 579
+		
+		int atoi(char*s)
+		{
+			
+			return num;
+		}
+		
+		int main(int argc,char**argv)
+		{
+			sum = atoi(argv[1]) + atoi(argv[2])
+			
+		}
+		
+	2.在字符串s中找到最大的那个字符并放在第一个位置上，并将该字符串的字符顺序移动
+	boy&girl
+	
+	=>ybo&girl
+	
+	
+=========================
+	typedef :类型重命名
+		typedef是用来声明一个新类型，来替换已有的一个类型，方便移植
+		
+	typedef 现有的类型名 新类型名;
+	
+	==============
+	typedef unsigned char uchar;
+	
+	uchar a;//unsigned char a;
+	
+	==========
+	int NUM[100];//定义了一个数组，数组名NUM
+	假如要你定义一个和NUM一样的类型的变量a
+	
+	typeof(NUM) a;
+	
+	typedef int[100] sss;//定义了一个新类型sss,int[100]
+	
+	sss a;// int[100] a => int a[100]
+	=========
+	void (*p)(int,int);//定义了一个函数指针
+	
+	typeof(p) p1;//定义了一个变量p1,它的类型就是p的类型
+	
+	typedef void(*p2)(int,int) ;定义了一个新类型，函数指针类型，类型名p2
+	
+	p2 p1;//定义了一个变量p1,它的类型就是p的类型
+	
+	===============
+	typedef加在定义变量（数组）前面，变成定义一个新类型
+	
+	int a;//a是一个变量
+	
+	typedef int a;//a就是一个新类型，等同int
+	
+	==============
+	int b[1024];
+	typedef int b[1024];//b就是一个新类型，等同int[1024]
+	
+	====
+	int(*p)(int,int);//定义一个函数指针变量p
+	
+	typedef int(*p)(int,int);//定义了一个新类型p,函数指针类型
+	
+	typedef struct student
+	{
+		int a;
+	}student;//定义了一个新类型 类型名student
+	
+	 struct student
+	{
+		int a;
+		int b;
+	}student;//定义这个类型的同时，用这个类型定义了一个变量，变量名为student
+	==================
+	
+	struct 
+	{
+		char a;
+	}student;
+	
+
+	typedef 与#define的区别：
+		
+	#define 宏定义  仅仅只是简单的字符串的替换作用，而typedef是为了另一个类型起一个新的名字
+	
+eg:
+		typedef char* str1;
+		#define str2 char* 
+		
+		str1 s1,s2;
+		str2 s3,s4;
+		
+		printf("%d %d %d %d\n",sizeof(s1),sizeof(s2),sizeof(s3),sizeof(s4));4 4 4 1
+		
+		char* s1,s2;// char*s1;char*s2
+		char* s3,s4;// char *s3,s4;
+		
+`
+		
+		
+		
+		
+		
+		
+
+	
+	
+	
+	
+	
+	

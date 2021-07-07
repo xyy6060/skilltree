@@ -1,0 +1,190 @@
+1.信号
+	信号是进程间通信的一种方式，这种方式没有传输数据
+	只是在内核中传了一个整数，这个整数值就是信号。不同的整数值
+	代表着不同的含义，用户可以自定义信号，这个信号的信号值的具体含义
+	有设计者来解释
+	
+	trap -l ，kill -l 查看信号值
+	 Signal     Value     Action   Comment
+       ──────────────────────────────────────────────────────────────────────
+       SIGHUP        1       Term(终止)    Hangup detected on controlling terminal
+                                     or death of controlling process
+										控制终端的挂起操作，或者是控制进程死亡
+										
+       SIGINT        2       Term    Interrupt from keyboard
+										ctrl+c
+										
+       SIGQUIT       3       Core(输出信息,然后终止)    Quit from keyboard
+										ctrl+\
+										
+       SIGILL        4       Core    Illegal Instruction(非法指令)
+	   
+       SIGABRT       6       Core    Abort signal from abort(3)
+									在进程调用abort时候，产生该信号
+									
+       SIGFPE        8       Core    Floating point exception
+									浮点数异常的时候，产生该信号
+									eg:
+											除数为0
+											
+       SIGKILL       9       Term    Kill signal
+       SIGSEGV      11       Core    Invalid memory reference
+									非法内存引用，会收到SIGSEGV
+									=》segemational  fault
+									
+       SIGPIPE      13       Term    Broken pipe: write to pipe with no
+                                     readers
+									 当你往一个管道写数据时，没有读端进程时候，就会产生这个信号
+									 
+       SIGALRM      14       Term    Timer signal from alarm(2)
+										定时信号，在进程调用alarm，会产生这个信号
+										
+       SIGTERM      15       Term    Termination signal  系统终止信号
+	   
+       SIGUSR1   30,10,16    Term    User-defined signal 1
+       SIGUSR2   31,12,17    Term    User-defined signal 2
+	   
+					用户自定义信号，其含义由程序设计者解释
+					
+       SIGCHLD   20,17,18    Ign（忽略）     Child stopped or terminated
+											子进程停止或退出时，父进程就会收到这个信号
+											
+		SIGCONT   19,18,25    Cont    Continue if stopped
+										恢复运行
+										
+       SIGSTOP   17,19,23    Stop    Stop process  暂停
+       SIGTSTP   18,20,24    Stop    Stop typed at terminal 由控制终端发起暂停信号
+       SIGTTIN   21,21,26    Stop    Terminal input for background process
+       SIGTTOU   22,22,27    Stop    Terminal output for background process
+	   
+	 The signals SIGKILL and SIGSTOP cannot be caught, blocked, or ignored.
+		SIGKILL和SIGSTOP不能够被捕捉，阻塞，忽略，只能够按照默认动作来响应
+		
+	进程在收到一个信号时，通常有三种处理方式：
+		（1）捕捉信号
+			把一个信号与用户自定义的处理函数相关联
+				一旦收到这个信号，就会自行调用处理函数
+				
+		（2）默认行为
+			收到一个信号，采用操作系统默认的行为
+				大部分的默认行为都是把进程杀死
+				只有一个会被忽略： SIGCHLD 
+				
+		（3）忽略该信号
+		
+2.信号处理过程
+	软中断过程
+	
+3.linux 下信号相关的API函数
+	(1)发送信号
+	
+		kill
+		
+		NAME
+       kill - send a signal to a process or a group of processes
+
+SYNOPSIS
+       #include <signal.h>
+	   
+		kill是用来发送sig指定的信号给pid指定的那个进程
+       int kill(pid_t pid, int sig);
+			pid：指定信号的接收者（可能是多个进程）
+				pid  > 0  ：pid就表示接收者进程
+				pid == 0   :发送信号给与调用进程同组的所有进程
+				pid == -1   : 发送信号给所有进程（有权限发送的进程）
+				pid < -1 :发送信号给组id为pid的绝对值的所有进程
+				
+			sig:要发送的信号
+				
+				
+		返回值：成功返回0（至少有一个进程收到信号）
+				失败返回-1，同时errno被设置
+========
+	raise 
+	NAME
+       raise - send a signal to the caller
+
+SYNOPSIS
+       #include <signal.h>
+		raise用发送发送信号给自己
+       int raise(int sig);
+	   
+=========
+	alarm:定时一个闹钟信号（SIGALRM）给本进程
+		每一个进程都有属于自己的一个“闹钟”  “闹钟时间”到了，进程就会收到SIGALRM
+		但是用一时刻一个进程只有一个闹钟生效
+		
+NAME
+       alarm - set an alarm clock for delivery of a signal
+
+SYNOPSIS
+       #include <unistd.h>
+
+	   alarm：用来给进程的“闹钟”定时
+       unsigned int alarm(unsigned int seconds);
+		seconds：设置闹钟的“超时时间”，单位为秒
+		
+		设置一个闹钟的“超时时间”时，会自动把上一个闹钟取消
+	 If seconds is zero, any pending alarm is canceled.（取消）
+	 
+	 返回值：返回上一个闹钟的剩余秒数
+			一个进程同一时刻只能有一个闹钟
+			
+（2）捕捉信号：改变信号的处理方式
+	signal
+	
+
+NAME
+       signal - ANSI C signal handling
+
+SYNOPSIS
+       #include <signal.h>
+
+       typedef void (*sighandler_t)(int);
+		
+		sighandler_t 是一个新的类型名，什么类型？
+		函数指针类型，指向的函数带一个int型的参数，无返回值的函数
+		
+		你要指定或关联的那个函数觉得类型就是sighandler_t所指向的函数的类型
+		void  handler(int sig)
+		{
+			
+		}
+		
+		signal用来把signum这个信号和sighandler_t指向的函数相关联
+		
+		
+       sighandler_t signal(int signum, sighandler_t handler);
+		signum：信号值，要关联的或要捕捉的的信号
+	    handler：函数指针，新的信号处理方式
+					（1）自己写一个信号处理函数
+					（2）忽略  SIG_IGN
+					（3）default  SIG_DFL
+					
+					
+		返回值：返回该信号上一次的处理方式
+					第一次返回NULL，下一次返回此信号上一次注册信号处理函数的地址
+					
+				失败返回SIG_ERR，同时errno被设置
+				
+(3)等待信号到来
+	将进程挂起直到收到一个信号
+	pause
+	
+	NAME
+       pause - wait for signal
+
+SYNOPSIS
+       #include <unistd.h>
+
+       int pause(void);
+	   
+	   返回值：收到致命信号导致进程异常退出  不返回
+				收到非致命信号或已经被捕捉到的信号   -1
+
+	
+
+
+		
+mplayer
+	   

@@ -1,0 +1,130 @@
+一：mplayer简介
+
+MPlayer是一款开源的多媒体播放器，以GNU通用公共许可证发布。此款软件可在各主流作业系统使用，例如Linux和其他类Unix作业系统、
+微软的视窗系统及苹果电脑的Mac OS X系统。MPlayer是建基于命令行界面，在各作业系统可选择安装不同的图形界面。
+因为linux下都是命令行的操作方式，所以对mplayer的各种操作都是用命令来实现的，这次主要用的是它的slave工作方式
+
+ 
+
+slave模式协议
+1，简介：
+
+      默认mplayer是从键盘上获得控制信息
+
+  mplayer另外提供了一种更为灵活的控制方式，用来进行播放控制——slave模式
+
+      在slave模式下，MPlayer为后台运行其他程序，不再截获键盘事件，
+
+  MPlayer会从标准输入读一个换行符（\n）分隔开的命令。
+
+ 
+
+2，操作：
+
+ 
+
+#mplayer -input cmdlist
+
+ // 会打印出一份当前mplayer所支持的所有slave模式的命令
+
+ 
+
+方法一：从控制台输入控制命令(测试使用)
+
+    运行mplayer -slave -quiet <movie>，并在控制台窗口输入slave命令。
+
+//-slave 启动从模式  
+
+//-quiet 不输出冗余的信息
+
+常用到的 Mplayer指令：
+
+loadfile   string   //参数string 为 歌曲名字。 
+
+volume 100 1  //设置音量 中间的为音量的大小。
+
+mute  1/0 //静音开关
+
+pause  //暂停/取消暂停
+
+get_time_length  //返回值是播放文件的长度，以秒为单位。
+
+seek value   //向前查找到文件的位置播放 参数value为秒数。
+
+get_percent_pos //返回文件的百分比（0--100）
+
+get_time_pos //打印出在文件的当前位置用秒表示，采用浮点数
+
+volume <value> [abs] //增大/减小音量，或将其设置为<value>，如果[abs]不为零
+
+ 
+
+get_file_name //打印出当前文件名
+
+get_meta_album //打印出当前文件的'专辑'的元数据
+
+get_meta_artist //打印出当前文件的'艺术家'的元数据
+
+get_meta_comment //打印出当前文件的'评论'的元数据
+
+get_meta_genre //打印出当前文件的'流派'的元数据
+
+get_meta_title //打印出当前文件的'标题'的元数据
+
+get_meta_year //打印出当前文件的'年份'的元数据
+
+ 
+
+方法二：从有名管道(fifo)输入控制命令（应用编程中使用）
+
+    #mkfifo </tmp/fifofile>
+
+    #mplayer  -slave  -input  file=</tmp/fifofile> <movie>
+
+    //用户可以通过往管道里写入slave命令来实现对应的功能
+	
+	
+启动Mplayer的语句：
+
+execl("/bin/mplayer","mplayer","-ac","mad","-slave","-quiet","-input","file=/tmp/my_fifo",buf,NULL);
+
+ 
+
+参数："-ac" "mad"             用的mad解码器
+
+      "-slave"   Mplayer运行在slave模式下，在关于slave模式，MPlayer为后台运行，不再截获键盘事件，MPlayer 从标准输入读取以新行 (/n) 分隔开的命令行
+
+      "-quiet"   使得控制台消息少输出; 特别地, 阻止状态行 (即 A: 0.7 V: 0.6 A-V: 0.068 ...)的显示。
+
+      "-intput" "file=/tmp/fifo"    Mplayer 通过命名管道获取命令。
+
+      buf     是歌曲的路径字符串的首地址
+
+      NULL      在参数的最后一个为NULL，Mplayer可以通过它来判断到底有多少个参数，这个是必须有的。
+
+在execl中规定MPlayer从命名管道中获取消息，主进程中就必须通过向命名管道写"命令字符串"来控制Mplayer，
+
+所以在主进程中必须创建子进程之前创建fifo,父子进程通过fifo通信。
+
+path_tmp 表示歌曲文件所处发路径包含歌名
+
+execlp("mplayer", "mplayer", "-ac", "mad", "-slave", "-quiet", "-input", "file=../tmp/cmd_fifo", path_tmp, NULL);
+
+slave模式协议
+-------------------
+
+关于slave模式，MPlayer为后台运行其他程序。不再截获键盘事件，MPlayer会从标准输入读一个换行符（\n）分隔开的命令。	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	

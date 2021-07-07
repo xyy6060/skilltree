@@ -1,0 +1,369 @@
+IO模型：
+	研究的是读写一个文件描述符的几种不同的方式。有四种I/O模型
+	
+	（1）阻塞IO
+		读：如果有数据（即使是小于要读的字节数），直接返回数据  
+			如果没有数据，则阻塞直到有数据 或出错 
+			
+		写：如果有空间直接写（即使是小于要写的字节数），直接写
+			如果没有空间据，则阻塞直到有空间 或出错 
+			
+			最常用，最简单，效率最低
+			
+			
+	（2）非阻塞IO
+		能读则读，不能读则返回一个出错码
+		能写则写，不能写则返回一个出错码
+	
+	
+	（3）I/O多路复用
+		允许同时对多个I/O进行控制  select/pll/epoll
+		
+	（4）异步通信（信号驱动I/O）
+			一个可读或可写
+			发送一个信号（SIGIO）给应用程序（该文件的所有者程序）	
+			
+1.如何改变一个文件的读写方式（阻塞、非阻塞）
+	（1）open的时候
+		加上  O_NONBLOCK   =>非阻塞
+		没加上  O_NONBLOCK   =>阻塞
+		
+	（2）O_NONBLOCK ....  属于文件状态信息，在打开文件后改变这些状态信息
+	
+		fcntl :可以改变已经打开的文件性质
+			文件状态标志：
+				O_RDONLY
+				O_WRONLY
+				O_RDWR
+				O_APPEND  追加
+				O_NONBLOCK  
+				O_TRUNC
+				O_ASYNC 异步通信（信号驱动I/O）
+				O_SYNC   等待写完成 （数据或属性）
+				O_DSYNC  等待写完成 （数据）
+				...
+				
+		fd ：标志
+			目前只有一个
+		
+		FD_CLOEXEC
+		
+		
+	NAME
+       fcntl - manipulate file descriptor
+
+SYNOPSIS
+       #include <unistd.h>
+       #include <fcntl.h>
+
+		fcntl用来操作文件描述符，具体操作由命令号cmd来指定
+       int fcntl(int fd, int cmd, ... /* arg */ );
+	   
+	  fcntl有五种功能：
+		（1）复制一个现有的文件描述符 cmd == F_DUPFD 
+				
+			F_DUPFD :复制文件描述符fd,新的文件描述符作为函数的返回值返回
+				它是尚未打开的文件描述符中大于或等于第三个参数的个值的最小值
+				
+				
+			eg:
+				int r = fcntl(fd,F_DUPFD,5);
+				
+					=>r,fd DOI指向同一个打开的文件  且 r >= 5
+					
+		（2）获取/设置文件描述符的标志 （cmd = F_GETFD or cmd = F_SETFD ） 
+			F_GETFD (void)
+			
+					Read the file descriptor flags; arg is ignored.
+					对应于fd的文件描述符的标志作为函数返回值返回
+					当前指定了一个标志描述符的标志
+						FD_CLOEXEC
+							close on exec
+							
+						如果设置了这个标志位，在调试exec时，就把程序文件关闭
+						
+			F_SETFD (int)
+              Set the file descriptor flags to the value specified by arg.
+				对应于fd设置文件描述符的标志位。新的标志位按照第三个参数设置
+				
+				eg:
+				int r = fcntl(fd,F_DUPFD,FD_CLOEXEC);
+				
+			
+		☆（3）获取/设置文件状态标志  （cmd = F_GETFL or cmd = F_SETFL）
+ 				
+			 F_GETFL (void)
+              Get  the  file  access  mode  and  the file status flags; arg is
+              ignored.
+				获取文件状态标志，作为函数返回值返回，第三个参数没有
+
+			F_SETFL (int)
+              Set the file status flags to the value specified by  arg.   File
+              access mode (O_RDONLY, O_WRONLY, O_RDWR) and file creation flags
+              (i.e., O_CREAT, O_EXCL, O_NOCTTY, O_TRUNC) in arg  are  ignored.
+              On  Linux  this  command  can change only the O_APPEND, O_ASYNC,
+              O_DIRECT, O_NOATIME, and O_NONBLOCK flags.
+
+			设置文件状态的标志，新的状态标志就作为第三个参数
+			
+			eg:
+				1.判断一个已经打开的文件，是非为非阻塞
+					int flag = fcntl(fd,F_GETFL);
+					if(flag & O_NONBLOCK)
+					{
+						return true;
+					}
+					return false;
+				
+				2.一个文件打开的时候，只读打开的。但是打开后，想要去写这个文件，怎么办？
+					//获取文件的状态
+					int flag = fcntl(fd,F_GETFL);
+					flag |= O_RDWR;
+				
+					int r = fcntl(fd,F_SETFL,flag);
+					
+				3.设置一个打开的文件为阻塞方式
+					//获取文件的状态
+					int flag = fcntl(fd,F_GETFL);
+					
+					//去掉O_NONBLOCK这个标志位，其余的位不变
+						flag &= ~O_NONBLOCK;
+					
+					//设置O_NONBLOCK这个标志位，其余的位不变
+					//flag |= O_NONBLOCK;
+					
+					int r = fcntl(fd,F_SETFL,flag);
+
+			（4）获取/设置文件的属主进程（所有者进程）
+				  F_GETOWN (void)
+							获取文件所有者进程id，作为函数返回值返回
+				F_SETOWN (int)
+							设置文件所有者进程id，第三个参数为新的所有者进程id 
+							
+						eg:
+							pid_t own_pid = fcntl(fd,F_GETOWN);
+							
+							fcntl(fd,F_SETOWN,getpid());
+							//将本进程id设置为文件fd的所有者进程
+							
+							
+			（5）获取/设置文件的记录锁 （F_GETLK/F_SETLK/F_SETLKW ）
+				锁 ：lock
+				记录 ：文件内容的任何一部分都称为记录
+				
+				记录锁 ：== >读写记录锁
+				
+					当一个进程正在读/写文件的某一部分的时候，可以阻止其他进程修改同一个文件
+					
+				    struct flock
+					{
+						...
+						short l_type;    /* 锁的类型: 
+										F_RDLCK,读锁
+										F_WRLCK, 写锁
+										F_UNLCK  解锁*/
+										
+						short l_whence;  /* How to interpret l_start:
+                                   SEEK_SET,
+								   SEEK_CUR,
+								   SEEK_END */
+						off_t l_start;   /* Starting offset for lock */
+											//0 :表示锁到文件末尾
+											
+						pid_t l_pid;     /* PID of process blocking our lock
+                                   (F_GETLK only) */
+											持有锁的进程ID
+						...
+					};
+					
+				 
+			F_GETLK /F_SETLK /F_SETLKW :第三个参数 ：类型 结构体指针
+			
+				F_GETLK：获取记录锁的信息，存储到结构体中
+				
+				F_SETLK：结构体存储的就是 要设置的记录锁的信息  
+					注意：
+						这个函数不阻塞
+							能设置就设置，不设置就返回-1
+							
+				F_SETLKW :
+					
+					这个函数阻塞	
+					
+					
+			判断ptr所描述的这把锁是否被另外一把锁排斥
+			
+			struct flock ptr;
+			ptr.l_type = F_RDLCK;
+			ptr.l_whence = SEEK_SET;
+			ptr.l_start = 10;
+			ptr.l_len = 100;
+			ptr.l_pid = getpid();
+			
+			int r = fcntl(fd,F_SETLK,&ptr);
+			
+			
+2.多路复用
+		select/poll/epoll
+		用一个函数来实现对多个文件描述符进行监听
+	
+			调用read不阻塞，使用accept不阻塞
+			
+			调用read保证有数据，调用accept有客户端连接   （OS）
+			
+					clientfd1     serverfd
+					clientfd3
+					clientfd2
+					...
+	
+		select :
+			(1)将服务器的文件描述符和链接到服务器的客户端的文件描述符都添加到fd_set中
+			
+			(2)将fd_set中所有的文件描述符拷贝到内核中
+			
+			(3)内核注册一个_pollwait()函数轮询所有的文件描述符的读写状态
+			
+			(4)一旦一个或者是多个文件描述符的读写状态发生变化
+			select 就返回，将fd_set从内核空间拷贝到用户空间
+			
+
+	
+		
+		select
+	NAME
+       select,  FD_CLR,  FD_ISSET, FD_SET, FD_ZERO - synchronous I/O multi‐
+       plexing
+
+SYNOPSIS
+       /* According to POSIX.1-2001 */
+       #include <sys/select.h>
+
+       /* According to earlier standards */
+       #include <sys/time.h>
+       #include <sys/types.h>
+       #include <unistd.h>
+
+       int select(int nfds, fd_set *readfds, fd_set *writefds,
+                  fd_set *exceptfds, struct timeval *timeout);
+
+		用类型fd_set来表示一个文件描述符的集合
+				可能要监听：是否可读
+							是否可写
+							是否出错
+							
+				需要是用到三个fd_set的变量分别来表示监听可读的文件描述符集合
+													监听可写的文件描述符集合
+													监听可出错的文件描述符集合
+													
+			nfds：所关心的文件描述符中最大值+1
+			readfds：要监听的是否可读的文件描述符的集合
+						select 返回时，保存的是已经可读的文件描述符的集合
+			writefds：要监听的是否可写的文件描述符的集合
+						select 返回时，保存的是已经可写的文件描述符的集合
+			exceptfds：	要监听的是否可出错的文件描述符的集合
+						select 返回时，保存的是已经可出错的文件描述符的集合		
+
+			timeout：超时时间	
+					>0  假设设置的是2s,1s的时候有文件描述符就绪，
+					
+					== 0  直接退出
+					<0  NULL  一直在监听
+			
+			  struct timeval {
+               long    tv_sec;         /* seconds */
+               long    tv_usec;        /* microseconds */
+           };
+		
+		返回值：
+			>0  表示已经就绪的文件的个数
+			==0  超时
+			== -1  出错，同时errno被设置
+			
+		把	fd从set指向的集合中清掉  
+       void FD_CLR(int fd, fd_set *set);
+		
+		判断fd是否在set指向的集合中被设置
+       int  FD_ISSET(int fd, fd_set *set);
+	   
+		把fd加入到set指向的集合中
+       void FD_SET(int fd, fd_set *set);
+	   
+	   把set指向的集合清0
+       void FD_ZERO(fd_set *set);
+
+
+poll:
+	AME
+       poll- wait for some event on a file descriptor
+
+SYNOPSIS
+       #include <poll.h>
+
+       int poll(struct pollfd *fds, nfds_t nfds, int timeout);
+	   
+	   poll是用结构体struct pollfd来描述要监听的文件和要监听的时间
+		   struct pollfd {
+               int   fd;         /* file descriptor */
+               short events;     /* 要监听的事件 ：用到事件码 */
+									 POLLERR  可出错
+									 POLLIN    可读
+									 POLLOUT    可写
+
+
+									
+               short revents;    /* returned events  已经发生的事件 */
+           };
+		   
+		 fds：struct   pollfd数组
+		 nfds：数组元素的个数
+		 timeout:超时时间  单位是毫秒
+			==0  阻塞到有文件描述符就绪
+		 
+		 返回值 ：
+			>0 表示就绪的文件的个数
+			== 0 超时
+			== -1  出错，同时errno被设置
+		   
+
+
+epoll :
+	 *  epoll_create(2)  creates  an  epoll  instance and returns a file descriptor
+          referring to that instance.  (The more recent epoll_create1(2) extends  the
+          functionality of epoll_create(2).)
+
+       *  Interest   in   particular   file   descriptors   is  then  registered  via
+          epoll_ctl(2).  The set of file descriptors currently registered on an epoll
+          instance is sometimes called an epoll set.
+
+       *  epoll_wait(2)  waits  for  I/O  events,  blocking  the calling thread if no
+          events are currently available.
+
+
+	
+	
+select :
+	能够检测的最大文件描述符的个数是有限制   1024
+	数据从用户空间copy 文件描述符到 内核空间  消耗资源
+	内部使用的是轮询所有的文件描述符
+	
+poll :
+	最大文件描述符是 没有限制
+	
+epoll :
+	对文件描述符没有个数上的限制
+	只有调用epoll_ctl增加需要监听的文件描述符
+		会把数据从用户空间拷贝到内核
+		
+	当有文件描述符发生了对应的时间，唤醒正在等待的wait函数
+	
+	
+	
+	
+	
+			
+			
+						
+				
+				
+
+							

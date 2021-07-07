@@ -1,0 +1,446 @@
+1.数据库（DataBase）与数据库管理系统（DBMS：DataBase Management System）
+	数据库：简单来说可视为电子化的文件柜
+	用户可以对文件中的数据进行增，删，改，查等操作
+	
+	数据库指的是以一定方式存储在一起，能为多个用户共享，具有尽可能小的冗余度，与
+	应用程序彼此独立的数据集合
+	
+	数据库管理系统（DBMS）是专门为数据库设计的电脑软件系统，一般具有存储，截取，安全保障，备份等基础功能
+	
+		数据库与数据库管理系统的关系：
+			Excel中的多个表  和Excel的关系
+	
+2.关系数据库（Relational DataBase）
+	把复杂的数据结构归结于简单的一个二元关系（及二维表格的一个形式）
+	关系型数据库是创建在关系模型基础上的数据库
+	
+3.表（关系relation）
+	表示由行和列的形式组织起来的数据的集合
+	关系数据库是由多个表组成的
+	
+	行 ：一条完整的记录 （一个完成的对象描述），包含不同的属性
+	列：具有相同属性的数据集合
+	
+4.关系型数据库系统
+	Oracle ：甲骨文  前生叫SDL  第一个商业SQL关系型数据库管理系统  
+	MySQL  ：中小型关系型数据库管理系统 
+	Sqlite ：轻量级的开源的关系数据库管理系统，适用于嵌入式设备中使用
+	SQL server：微软   只能在Windows下
+	....
+	
+	
+	
+5.E-R模型 
+	实体——关系模型
+	
+		实体：某一类对象。  对象具有一些属性
+			实体要研究可保存的对象，以及他的属性
+			
+			他的属性当中（一个属性，或者组合属性）可以唯一标识该对象的
+			为这个属性为主键，key
+			
+eg:
+	学生成绩管理
+		
+	学生：学号，姓名，班级，性别，联系方式....
+	课程：课程id，课程名，任课老师，课时，学分....
+	成绩：学号，课程号，分数      （学号，课程号  =》外键）
+	
+	
+	sudo apt-get install sqlite3
+	sudo apt-get install libsqlite3-dev
+	sudo apt-get install sqlitebrowser
+	
+	
+6.关系型数据库语言   SQL   结构化查询语言
+	SQL（structured Query Language）
+	一种介于关系代数与关系演算之间的结构化查询语言，是一个通用的，功能极强的关系型数据库语言
+	
+		DDL：Data Define Language 数据（元数据）定义语言
+			表（创建，删除，修改）
+			
+			
+		
+		DML：Data Manipilate Language  数据（用户数据）操作语言
+			增 删 改 查
+	
+	SQL 语言都以 ; 结束
+	create table :用于创建一个关系表
+	
+		语法：
+			create table 表名
+			(
+				列名1   数据类型  “约束”，
+				列名2   数据类型  “约束”，
+				....
+			);
+			
+			数据类型：
+				int(size)
+				integer(size)   仅容纳整数  size规定数字的最大位数
+				text     	 文本
+				char(size)   固定长度的字符串  size规定字符串的长度
+				varchar(size)  可变长度的字符串 ，size规定字符串中最大字符的个数
+				real    		 实型
+				null          空
+				blob        二进制
+				
+				....
+				
+			约束：
+				primary key   主键   主键必须是not null and unique
+				not null 不为空
+				unique  唯一
+				
+				foreign key  外键 ，这一列在外部的表中是主键。
+						一个表中的外键指向另一个表中的主键，关系就是通过外键
+						
+				check  检查  用于限制列中值的范围
+					check (age > 15 and age < 60)
+				default  默认值
+				.....
+				
+				
+			
+		eg:
+			create table student(
+					num int primary key,
+					name text  not null,
+					class text,
+					sex int default 1,
+					age int check(age >15)
+					);
+	
+	drop table ：删除一个表
+		语法：
+			drop table 表名;
+			
+	alter table :修改一个表
+		给一个表重命名
+			alter table stu  rename to stuinfo;
+			
+		向表中添加新的字段(新的列)
+			alter table 表名 add column  列名  数据类型  约束;
+				
+			eg:
+				alter table stu add column  addr  text  default "changsha";
+			
+			
+	insert into :用于向表中插入新的行
+		语法：	
+			insert into 表名 values(值1,值2,....);  //有多少列要给多少个值
+			
+			or
+			
+			insert into 表名 (列名1，列名2，...)  values(值1,值2,...);
+			
+		
+		insert into stu1(num,score) select num,score from stu;
+		
+	update:用于修改表中的数据
+		语法：
+			update  表名 set 列名1=新值，列名2=新值，.... where 列名  运算符  值；
+			
+			运算符：
+				=  等于
+				<>  不等于
+				> 大于
+				< 小于
+				between and
+				
+				有多个条件
+					and  并且
+					or  或者
+					
+					
+			eg:
+				update  student set class="CS19167"  where num = 1001;
+				update  student set name="lll"  where age > 18 and age < 22;
+				update  student set name="lll"  where age between 18 and 22;
+				
+	delete:用于删除表中的行
+		语法：	
+			delete from 表名 where 列名  运算符  值;
+			
+			eg:
+				delete from student where age < 40;
+				
+	
+	select:
+		用于从表中（可以是多个表）选取数据（查询），结果被存储到一个结果集中
+		查看：
+	
+		语法：
+			select 列名1，列名2，....from 表名  where 列名  运算符  值;
+			
+		select *from 表名;
+				
+			eg:
+				select num,age from student  where num < 1000;
+		
+		
+		select 表名1.列名1，表名1.列名2，表名2.列名1 from 表名1,表名2  where 列名  运算符  值;
+		
+		eg:
+		 select stu.name,stu.score,student.class from stu,student where stu.num = student.num;
+		 
+		 
+7.sqlite3 c/c++函数接口
+	
+	sqlite3接口的核心元素
+		两个对象和八个函数
+		
+	两个对象：
+		sqlite3  :the Database connection  object  数据库连接对象
+					数据库连接句柄/数据库的文件描述符
+					sqlite3代表着你所打开的那个sqlite3数据库文件，
+					后序对这个数据库的操作都需要用到这个对象
+					
+		sqlite3_stmt :the prepared statement object .  SQL语句对象
+					操作关系型数据库都要通过SQL语句来实现
+					
+					
+	八个函数：
+		sqlite3_open:打开或创建一个sqlite3数据库，返回一个sqlite3的数据库连接对象
+		sqlite3_close :关闭一个sqlite3的数据库连接对象
+		
+		sqlite3_prepare_v2:创建一个语句对象
+		sqlite3_bind_*:给SQL语句对象绑定参数     =》一系列绑定函数
+		sqlite3_step:执行SQL语句对象
+		
+		sqlite3_reset:
+		sqlite3_finalize:
+		
+		sqlite3_exec:
+		
+		....
+				
+	
+	
+	操作sqlite3数据库的流程：
+	
+	
+	
+8.具体的API函数接口解析
+	============
+	(1)打开或创建一个sqlite3数据库，返回一个sqlite3的数据库连接对象
+		sqlite3_open
+		
+		在sqlite3数据库管理系统中，用结构体sqlite3来表示一个已经打开的数据库对象，
+		后序对这个数据库的操作都需要用到这个对象
+		
+		 int  sqlite3_open(const char *filename,sqlite3 **ppDb )
+		 
+			filename    /* Database filename (UTF-8) 要打开的sqlite3的来数据库的名字（带路径）*/
+			ppDb      二级指针    /* OUT: SQLite db handle */，用来保存打开的数据库连接对象
+			
+			
+		返回值：
+			成功返回SQLITE_OK
+			失败返回其他值，同时errno被设置
+	===========		
+	(2)	sqlite3_close :关闭一个sqlite3的数据库连接对象
+		
+		int  sqlite3_close(sqlite3 *);
+	============		
+	(3)SQL语句对象
+		sqlite3_stmt这个结构体用来描述一个SQL语句对象
+		
+		我们的应用通过SQL语句对象去发送SQL指令给数据库管理系统
+		
+		sqlite3_prepare_v2 ：编译SQL语句，并创建一个SQL语句对象
+		
+		
+		int sqlite3_prepare_v2(
+						sqlite3 *db,            /*数据库连接对象，表示要操作哪个数据库*/
+						const char *zSql,       /* 要编译的SQL语句 ，多条SQL语句用 ;隔开*/
+						int nByte,              /*指示要编译的zSql语句到哪个位置 */
+											<0  ：编译到zSql指向的SQL语句到第一个\0为止
+											>0   :编译zSql指向的SQL语句前面n字节
+											=0 :什么都不编译
+											
+						sqlite3_stmt **ppStmt,  /* OUT: Statement handle 用来保存编译好的SQL语句对象*/
+						
+						const char **pzTail     /* OUT: Pointer to unused portion of zSql 
+													第一条完整SQL语句后面的第一个字符*
+													
+													为NULL，不保存/
+							);
+
+			
+	返回值：
+			成功返回SQLITE_OK
+			失败返回其他值，同时errno被设置
+	=================		
+		zSql指向的原始的SQL语句
+		（1）不包含参数（变量）	
+			"create table stuinfo(num int primary key,name text not null,score int);\
+				insert into stuinfo(num,name,score) values(1001,'pxl',98);"
+				
+				
+		（2）包括参数（parameters）
+			编译的SQL语句中卡伊包含“变量/参数”，其值在运行期间可以发生改变
+			SQL语句对象不需要重新编译，通过特定的参数接口来制定这些SQL语句变量的值
+			
+			char *zSql = "insert into stuinfo(num,name,score) values(变量名1,变量名2,变量名3);"
+			
+			有如下几种方式来指定变量名
+			
+			:AAA  命名参数，参数名AAA,AAA 就是你所取的变量的名字
+			@AAA  命名参数，参数名AAA,AAA 就是你所取的变量的名字
+			$AAA  命名参数，参数名AAA,AAA 就是你所取的变量的名字
+			
+			? 
+			eg:
+				char *zSql = "insert into stuinfo(num,name,score) values(?,?,?);"
+			eg：
+				char *zSql = "insert into stuinfo(num,name,score) values(@num,@name,@score);"
+				
+				
+		(3)给SQL 语句对象中的参数赋值
+			3.1获取参数的索引
+				所有绑定参数的函数，都是通过参数索引去指定参数
+				
+				sqlite3_bind_parameter_index ：用来获取zName在SQL语句对象中的索引
+				
+				int  sqlite3_bind_parameter_index(sqlite3_stmt*, const char *zName);
+				
+				返回值：成功返回索引值（>0）
+						假如没有匹配到参数名，则返回0
+						
+			3.2给参数赋值
+				绑定值到参数上
+				
+				（4）
+				  int sqlite3_bind_blob(sqlite3_stmt*, int, const void*, int n, void(*)(void*));
+
+				 int  sqlite3_bind_double(sqlite3_stmt*, int, double);
+				 int  sqlite3_bind_int(sqlite3_stmt*, int, int);
+
+				 int  sqlite3_bind_null(sqlite3_stmt*, int);
+				 int  sqlite3_bind_text(sqlite3_stmt*,int,const char*,int,void(*)(void*));
+				 
+				 参数情况：
+					第一个参数：SQL语句对象
+					第二个参数：你所要绑定的变量在SQL语句中的索引
+					第三个参数：要绑定的值
+							“值”
+								
+									int  =>sqlite3_bind_int
+									double =>sqlite3_bind_double
+									null =>sqlite3_bind_null
+									char* =>sqlite3_bind_text
+									
+							int  sqlite3_bind_text(sqlite3_stmt*,int,const char*str,int len,void(*fun)(void*));
+											
+										str:字符串
+										len:字符串的长度
+										fun:函数指针
+											函数指针用来释放字符串的空间
+												不需要释放，直接为NULL
+
+
+			返回值：成功返回SQLITE_OK
+					失败返回其他值，同时errno被设置
+	============		
+	（5）sqlite3_step:用来执行编译好的SQL语句对象
+	
+			int  sqlite3_step(sqlite3_stmt*);
+				sqlite3_stmt：指向编译好的要执行的语句对象
+				
+				返回值：
+					SQLITE_DONE :SQL语句执行完成
+					SQLITE_BUSY :没有获取到锁，语句没有执行
+					SQLITE_ERROR :出错
+					SQLITE_MISUSE:使用方法不当
+					SQLITE_ROW :
+						
+						当SQL语句为select，执行后的结果是一个表，它是一行一行返回,
+						调用一次sqlite3_step就会返回一行,SQLITE_ROW还有返回结果（需要调用sqlite3_column*去解析结果）
+						....直到返回SQLITE_DONE
+						
+						查询结果和分析结果：
+							select 语句他返回的是一个结果集，需要用到额外的函数接口去获取这些结果集中的记录（row）
+							
+						//返回select结果中有多少列
+						int  sqlite3_column_count(sqlite3_stmt *pStmt);
+						
+						//返回结果行中第iCol列的数据类型
+						int  sqlite3_column_type(sqlite3_stmt*, int iCol);
+								返回值：
+									SQLITE_INTEGER  整型
+									SQLITE_FLOAT    浮点型
+									SQLITE_BLOB     blob  二进制
+									SQLITE_NULL     空
+									SQLITE_TEXT   文本  char*
+									
+						//获取结果集中当前行中的第iCol列的值
+						double  sqlite3_column_double(sqlite3_stmt*, int iCol);
+						int  sqlite3_column_int(sqlite3_stmt*, int iCol);
+						const unsigned char * sqlite3_column_text(sqlite3_stmt*, int iCol);
+						
+						返回结果集中第iCol列的名字
+						const char *sqlite3_column_name(sqlite3_stmt*, int iCol);
+					
+		
+	=================
+	(6)sqlite3_finalize	:销毁一个语句对象
+	
+	int  sqlite3_finalize(sqlite3_stmt *pStmt);	
+
+	===============
+	(7)sqlite3_reset:用来复位SQL语句对象，以便下一次参数的绑定
+	
+	int  sqlite3_reset(sqlite3_stmt *pStmt);
+	
+		返回值：成功返回SQLITE_OK
+				失败返回其他值，同时errno被设置
+	
+	==================
+	（8）一步到位的函数接口
+		sqlite3_exec其实是：
+			sqlite3_prepare_v2:创建一个语句对象
+			sqlite3_step:执行SQL语句对象
+			sqlite3_finalize:
+		三个函数的一个组合
+		
+		int  sqlite3_exec(
+						  sqlite3*,                                  /* 指向数据库连接对象 */
+						  const char *sql,                           /* 指向要指向的SQL语句(一般不带参数) */
+						  int (*callback)(void*,int,char**,char**),  /* 回调函数 */
+						  void *,                                    /* 这个参数，将作为回调函数的第一个参数传入 */
+						  char **errmsg                              /* 用来保存sqlite3_exec出错信息 */
+						);
+	
+		重点：第三个参数
+			回调函数：如果把函数的指针(地址)作为参数传递给另一个函数，当这个指针被用来调用它所指的函数时，
+					这个函数就称为回调函数
+			一般在sql语句为select语句时，需要回调，因为select语句需要返回结果。
+			select语句每查询到一条结果（行）就调用该回调函数			
+			
+			 int (*callback)(void*arg,int nCol,char*column_value[],char*column_name[])	
+			 
+				arg:用户自定
+				nCol:有多少列
+				column_value:每一列的值 （所有的值全部变成的一个字符串）
+				column_name：每一列的名字
+				
+	
+	sqlite3_exec：	
+		返回值：成功返回0
+				其他值返回失败，
+				
+				回调函数执行失败（返回非0），sqlite3_exec就不会往下执行
+				
+				只有当select语句时才需要回调，其余的语句就可以为NULL
+				
+			
+					
+			
+	
+	
+	sqlite3_errmsg：获取错误信息
+	char*sqlite3_errmsg(sqlite3 *db);
+	
+
+	

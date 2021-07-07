@@ -1,0 +1,758 @@
+网络编程基础知识点
+	（1）ARPA “阿帕”  ：是美国高级研究计划署的简称，世界上第一个封包交换网
+	也是全球互联网的始网
+	
+	网络采用分而始之的方法设计，将网络的功能划分为不同的模块，用分层的形式有机组合在一起
+	每层实现的不同的功能，其内部实现的方法对于外部其它层来说是透明的。每层向上提供服务，同时使用下层
+	提供的服务。
+	
+	网络体系结构：指网络的层次结构和每层使用协议的集合
+			两类非常重要的体系结构：OSI和TCP/IP
+1.网络层次协议模型			
+	OSI七层模式 ：理想化模型
+		应用层
+		表示层
+		会话层
+		传输层
+		网络层
+		数据链路层
+		物理层
+		
+	TCP/IP四层模式
+		应用层
+			应用协议
+				send hello 到对方
+					对方收到回复什么
+				http
+				ftp
+				QQ协议
+				...
+		传输层(TCP/UDP)
+			主要作用解决数据如何传输
+			TCP：Transport Control Protocol  传输层控制协议
+				是一种面向连接的传输层协议，它能提高可靠性通信
+				（数据无误，数据无丢失，数据无失序，数据无重复到达）的通信
+			
+				=》建立连接 ，三次握手，重发机制，四次挥手
+			
+			UDP：User Dategram  Protocol 用户数据报协议
+					它是不可靠的无连接的协议。在数据发送前，不需要进行连接，
+					所以可以进行高效率的数据传输
+					
+					
+		网络层：IP：网间协议
+				ICMP：Internet Control Message Protocol
+				IGMP：Internet Group Management Protocol
+				
+		数据链路层
+		
+2.网络数据是如何传输的	
+		分层传输
+		
+			数据封装 ，拆包过程
+			
+3.路由器是一种三层设备，是使用IP地址寻址，实现从源IP地址到目标IP地址的端到端的服务
+
+	（1）路由器收到数据包，提取目的IP地址及子网掩码计算目标网络地址
+	
+	（2）根据目标网络地址查找路由表，如果查找目标网络地址就按照相应的出口把数据包发送到下一个路由器
+	
+	（3）如果没有找到就看有没有默认的路由，如果有就按照默认的路由出口发送给下一个路由器
+	
+	（4）如果没有找到就会给源IP发送一个出错的数据包表明没法传递该数据包
+	
+	（5）如果是直接路由就按照MAC地址发送给目标站点
+	
+4.互联网地址（IP地址）Internet中的主机要跟别的机器通信必须要有一个IP地址
+	互联网上每一个接口（网卡）必须有一个唯一的IP地址。
+	协议上的一个逻辑地址。进行网络通信的时候，用这个IP地址唯一标识一台主机（一个网卡）
+	
+	IPV4  ：32bits
+	IPV6  : 128bits
+	
+一个IP地址分为两个部分：
+	网段号：用来标识某个局域网段
+	主机号：用来标识特定局域网段中特定的主机号
+	
+		网段号在IP地址的连续的高位
+		主机号在IP地址的连续的低位
+		
+											ip地址范围
+A   0  网络号（7bits） 主机号（24bits）      
+											0.0.0.0  ~ 127.255.255.255
+											
+											10.0.0.0  ~ 10.255.255.255  (私有ip地址范围)
+
+B   1 0  网络号（14bits） 主机号（16bits）      
+											128.0.0.0  ~ 191.255.255.255	
+											
+											172.16.0.0 ~ 172.31.255.255 (私有ip地址范围)
+											
+C   1 1 0  网络号（21bits） 主机号（8bits）      
+											192.0.0.0  ~ 223.255.255.255	
+												
+											192.168.0.0 ~ 192.168.255.255 (私有ip地址范围)
+	
+D   1 1 1 0 多播组号（28bits）	            
+											224.0.0.0   ~ 239.255.255.255
+											
+E   1 1 1 1 0 (留待后用)					240.0.0.0   ~ 247.255.255.255 
+
+
+在设置一个IP地址时，我们要知道哪些是网段号，哪些是主机号
+
+netmask（子网掩码） =》用来指定在ip地址中，哪些bits位是网段号，哪些bits位是主机号
+
+	netmask中为1 的bit位为网段号 ，为0 的bit位为主机号 
+	
+		netmask ：255.255.255.0
+		
+			IP ：192.168.31.171
+			
+			255.255.255.0
+			11111111 11111111 11111111 00000000
+			192			168		31		171
+			
+			网段号：192.168.31        
+			主机号 ：0~255
+					可以有256-2  这么多台主机在这个局域网中
+					
+	ip地址的表现形式：
+		192.168.31.171   “点分十进制”
+		
+		最终都会转化为一个无符号的32位整数
+		
+5.端口号
+	TCP和UDP采用16bits的端口号来标识应用程序
+	
+	IP地址只能唯一标识网络中的主机，但是每一台主机并不只是跑一个应用程序，跑多个应用程序
+	
+	从传输层角度可以分为TCP应用和UDP应用
+	为了区分这些网络应用就提出端口号
+	
+	一台主机网络应用程序  ：ip地址  + 传输层协议  + 端口号  确定
+	
+	端口号 IANA（Internet Assigned  Numbers Authority）  管理
+	
+	本质上是一个无符号的short型
+	0~65535
+	
+	众所周知的端口号：1~1023
+					21 => ftp
+					80 => http
+					
+	注册端口：
+			1024~49151
+					
+				
+			QQ => 8080
+			VNC => 5800
+			
+	动态或私有端口：49152~65535		
+			
+			
+6.字节序问题
+	不同类型CPU的主机中，内存存储多字节整数序列有两种方式
+	
+	大端模式：低地址存数据的高字节
+	
+	小端模式：低地址存储数据低字节
+	
+	网络字节序：采用大端模式
+	
+	NOTE:
+		大部分主机，当应用程序将整数送入给socket之前，需要转化为网络字节序
+		
+		应用程序从socket上取出一个整数，要传化小端模式
+	
+eg:
+	
+union test
+{
+	int a;
+	char b[4];
+};
+
+int main()
+{
+	union test t;
+	t.a = 0x11223344;
+	
+	//b[0]
+	printf("%x\n",b[0]);
+}
+	
+	
+7.socket
+	一个编程接口（网络编程接口）
+	是一种特殊的文件描述符（write、read）
+	
+	并不仅限于TCP/IP
+	
+	独立于具体协议的网络编程接口，这个接口位于应用层与传输层之间
+	
+	
+	socket类型;
+		(1)流式套接字（SOCK_STREAM）
+			面向字节流，专门针对传输层协议为TCP的应用
+			
+		(2)数据报套接字（SOCK_DGRAM）
+			专门针对传输层协议为UDP的应用
+			
+		(3)原始套接字 （SOCK_RAW）
+			直接跳过传输层
+	
+8.基本的TCP/UDP套接字编程流程
+	Server 
+		ip  + 传输层协议  + 端口号
+		
+		
+	client
+		ip  + 传输层协议  + 端口号
+		
+		
+9.基本的socket的接口函数
+	
+	(1)创建一个套接字：socket 
+	
+	NAME
+       socket - create an endpoint for communication
+
+SYNOPSIS
+       #include <sys/types.h>          /* See NOTES */
+       #include <sys/socket.h>
+		socket:创建一个套接字
+       int socket(int domain, int type, int protocol);
+	   
+		domain:指定域，协议族，socket并不仅限于TCP/IP，他还可以用于Bluetooth ，还可以是本地通信 ....
+								每一种下面都有自己的网络协议，我们把IPV4下面的所有的协议
+								全部归到一个域：AF_INET（IPV4的协议族）
+						   AF_UNIX, AF_LOCAL   Local communication              unix(7)
+						   AF_INET             IPv4 Internet protocols          ip(7)
+						   AF_INET6            IPv6 Internet protocols          ipv6(7)
+						   AF_IPX              IPX - Novell protocols
+						   AF_NETLINK          Kernel user interface device     netlink(7)
+						   AF_X25              ITU-T X.25 / ISO-8208 protocol   x25(7)
+						   AF_AX25             Amateur radio AX.25 protocol
+						   AF_ATMPVC           Access to raw ATM PVCs
+						   AF_APPLETALK        Appletalk                        ddp(7)
+						   AF_PACKET           Low level packet interface       packet(7)
+		type：指定要创建套接字的类型
+				 SOCK_STREAM   流式套接字  =》tcp
+
+				SOCK_DGRAM      数据报套接字 =udp
+
+				SOCK_RAW       原始套接字
+
+		protocol：指定具体的应用协议，可以指定为0（不知名的私有应用协议）	
+		
+		返回值：
+			成功返回一个套接字描述符(>0 ,与文件描述符类似)
+			失败返回-1，同时errno被设置
+	   =====================
+	  （2）网络地址结构体
+		socket接口可以用以太网ipv4也可以用ipv6，也可以用于蓝牙...
+		
+		不同的协议族，他们的地址不一样
+		
+		通用地址结构体：所有socket函数接口的地址参数类型
+		
+		定义在<linux/socket.h> 第一个成员变量（指定协议族），来区分何种具体的地址结构
+		
+		struct sockaddr  
+		{
+			sa_family_t   sa_family;//指定协议族
+			
+			char sa_data[14];
+		};	
+
+		
+		Internet 协议地址结构体
+		
+		<netinet/in.h>
+		struct sockaddr_in
+		{
+			sa_family_t   sin_family;//指定协议族  AF_INET
+			u_int16_t     sin_port;//端口号
+			struct in_addr  sin_addr;//ip地址
+			
+			char sin_zero[8];
+			
+			//填充8个字节，主要是为了和其他的协议族地址结构体一样大小
+		};
+		
+		struct in_addr
+		{
+			in_addr_t s_addr;//ip地址
+		};
+		
+		typedef  u_int32_t  in_addr_t;
+		
+		
+		
+		ipv4地址之间的转换函数
+		
+		inet_aton
+		
+		 inet_aton,    inet_addr,    inet_network,   inet_ntoa - Internet address manipulation routines
+
+SYNOPSIS
+       #include <sys/socket.h>
+       #include <netinet/in.h>
+       #include <arpa/inet.h>
+
+		inet_aton:把ip地址（点分式的字符串）转换成struct in_addr
+		
+       int inet_aton(const char *cp, struct in_addr *inp);
+			cp:要转换的ip地址（点分式的字符串）
+			inp：用来保存转换后的ip地址
+
+	eg:
+		struct sockaddr_in sa;
+		memset(&sa,0,sizeof(sa));
+		sa.sin_family = AF_INEF;
+		sa.sin_port = htons(10086);
+		//sa.sin_addr
+		inet_aton("192.168.31.171",&(sa.sin_addr));
+		
+			
+			
+       in_addr_t inet_addr(const char *cp);
+		inet_addr把ip地址（点分式的字符串）转成in_addr_t（u_int32_t）
+		eg:
+			sa.sin_addr.s_addr = inet_addr("192.168.31.171");
+		
+		inet_network与inet_addr功能和返回值一模一样
+       in_addr_t inet_network(const char *cp);
+
+	   inet_ntoa：把一个ip地址（struct in_addr）的形式，转换为一个“点分式”的ip字符串
+       char *inet_ntoa(struct in_addr in);
+
+=========================
+	（3）网络字节序之间的转换函数
+		
+		h :host 主机字节序
+		n :network  网络字节序
+		l :long  => 32bits
+		s :short => 16bits
+		
+	AME
+       htonl,  htons,  ntohl,  ntohs - convert values between host and network
+       byte order
+
+SYNOPSIS
+       #include <arpa/inet.h>
+
+       uint32_t htonl(uint32_t hostlong);
+
+       uint16_t htons(uint16_t hostshort);
+
+       uint32_t ntohl(uint32_t netlong);
+
+       uint16_t ntohs(uint16_t netshort);
+
+
+=================
+	(4)bind  把一个地址绑定到套接字上面
+	
+		NAME
+       bind - bind a name to a socket
+
+SYNOPSIS
+       #include <sys/types.h>          /* See NOTES */
+       #include <sys/socket.h>
+
+       int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+			sockfd：要绑定的套接字描述符
+			addr:  要绑定的地址的指针
+			addrlen：绑定的地址结构体的长度
+			
+			返回值：成功返回0
+					失败返回-1，同时errno被设置
+=======================				
+	(5)listen  :开启对一个套接字的监听操作
+	
+	NAME
+       listen - listen for connections on a socket
+
+SYNOPSIS
+       #include <sys/types.h>          /* See NOTES */
+       #include <sys/socket.h>
+
+       int listen(int sockfd, int backlog);
+		sockfd：要监听的套接字描述符
+		backlog:监听队列上最大请求数
+		
+		
+		返回值：成功返回0
+		失败返回-1，同时errno被设置
+			
+======================
+   （6）accept  ：接收一个连接请求
+		
+			阻塞函数，则塞直到有连接请求
+
+NAME
+       accept - accept a connection on a socket
+
+SYNOPSIS
+       #include <sys/types.h>          /* See NOTES */
+       #include <sys/socket.h>
+
+       int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
+		sockfd：监听套接字
+		addr：用来保存客户端的地址的
+		addrlen：socklen_t * 用来保存客户端的地址的长度
+		
+				NOTE：在调用时，addrlen需要先要保存addr指向的结构体的大小
+				
+				函数返回时addrlen指向的变量，保存的就是客户端地址的实际大小
+				
+				这样做目的就是为了防止：越界
+				
+				
+	返回值：成功返回一个连接的套接字（表示与一个特定的客户端的连接，
+				后序与这个客户端发生数据交换都可以通过该套接字）
+				
+			失败返回-1，同时errno被设置
+			
+====================
+	（7）connect :连接套接字
+		NAME
+       connect - initiate a connection on a socket
+
+SYNOPSIS
+       #include <sys/types.h>          /* See NOTES */
+       #include <sys/socket.h>
+
+       int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+			sockfd:套接字描述符
+			addr：指定服务器的地址（ip+port），表示要跟谁连接
+			addrlen:指定第二个参数所指向的空间的长度
+			
+		返回值：
+			成功返回0
+			失败返回-1，同时errno被设置
+		
+=================
+	（8）往套接字上发送和接收数据
+	read/write
+	recv/send
+	recvfrom/sendto
+			tcp可以用上面的所有的函数，UDP只能使用recvfrom/sendto
+	
+	NAME
+       send, sendto - send a message on a socket
+
+SYNOPSIS
+       #include <sys/types.h>
+       #include <sys/socket.h>
+
+		send用来往一个套接字上发送数据
+       ssize_t send(int sockfd, const void *buf, size_t len, int flags);
+		sockfd，buf，len 前面三个参数与write类似
+		
+		flags：发送标志位
+				一般为0  默认阻塞
+				
+				MSG_DONTWAIT 非阻塞
+				
+		返回值：成功返回实际发送的字节数
+				失败返回-1，同时errno被设置
+			
+		sendto与send函数类似，多了两个参数
+		
+       ssize_t sendto(int sockfd, const void *buf, size_t len, int flags,
+                      const struct sockaddr *dest_addr, socklen_t addrlen);
+
+		dest_addr：	表示数据的接收方地址。udp一定要指定
+					tcp可以不指定。sockfd对tcp来说是一个连接套接字，该套接字内部已经保存了对方的地址信息
+			
+		addrlen：dest_addr所指向的结构体的长度
+		
+				
+		返回值：成功返回实际发送的字节数
+				失败返回-1，同时errno被设置
+	
+	========
+		NAME
+       recv, recvfrom- receive a message from a socket
+
+SYNOPSIS
+       #include <sys/types.h>
+       #include <sys/socket.h>
+
+       ssize_t recv(int sockfd, void *buf, size_t len, int flags);
+			sockfd，buf，len 前面三个参数与read类似
+			flags：接收标志位
+			
+				一般为0  默认阻塞
+				
+				MSG_DONTWAIT 非阻塞
+				
+		返回值：成功返回实际接收的字节数
+				（== 0 对方下线了）
+				
+				失败返回-1，同时errno被设置
+		
+			recvfrom	前面四个参数与recv是一样的	
+       ssize_t recvfrom(int sockfd, void *buf, size_t len, int flags,
+                        struct sockaddr *src_addr, socklen_t *addrlen);
+						
+			src_addr：用来保存发送方的地址。udp可以指定
+						如果udp不指定，可以收到数据，但是不指定数据是谁发的
+						
+					tcp没必要指定，sockfd保存了发送方的地址信息
+			
+			addrlen：用来保存发送方地址的长度
+				NOTE：在调用时，addrlen需要先要保存addr指向的结构体的大小
+				
+				函数返回时addrlen指向的变量，保存的就是发送方地址的实际大小
+				
+				这样做目的就是为了防止：越界
+			
+	返回值：成功返回实际接收的字节数
+			失败返回-1，同时errno被设置
+===============
+	（9）关闭套接字
+		shutdown
+	NAME
+       shutdown - shut down part of a full-duplex connection
+
+SYNOPSIS
+       #include <sys/socket.h>
+
+       int shutdown(int sockfd, int how);
+		sockfd:要关闭的套接字描述符
+		how:关闭方式
+			SHUT_RD ：关读
+			SHUT_WR :关写
+			SHUT_RDWR :关读写  =》close(socket)
+			
+		
+  	返回值：
+			成功返回0
+			失败返回-1，同时errno被设置
+				
+
+					
+  作业：1.  （1）用tcp写一个网络传文件的程序
+			（2）能够并发的与多个客户端连接
+			
+			
+			“应用层协议”：ls   get  put
+				如：
+					client 				server
+					
+							===》 ls
+							<====  文件名				
+  
+							====》get 2.txt
+							<===== 2.txt  
+							
+							====》 put 1.txt
+							===>1.txt
+							
+							...
+							
+							
+		2.udp的例子
+			DNS：Domain Name System  域名解析系统
+			
+		www.baidu.com  =>域名
+			百度的服务器上有一个TCP的服务器，端口号是80  =》http
+			
+			
+			www.baicu.com  =>ip
+				DNS
+			DNS 是一个把域名转换成相应的ip地址的服务
+				DNS传输层用的UDP协议
+				
+				
+		====================
+		NTP：Network Time Protocol  网络时间协议
+		
+		udp 端口号： 123
+		
+		获取一个网络时间，然后在设置本地的时钟
+		
+			需要写一个ntp的客户端程序，从ntp服务器上获取网络时钟
+			
+			
+		time()
+		
+=============
+	TCP和UDP的编程差异
+（1）socket的参数（第二个）不同
+（2）UDP的server不需要调用listen和accept
+（3）UDP的client不需要调用connect
+（4）UDP收发数据用sendto/recvfrom
+（5）shutdown这个函数对UDP无效
+
+====
+10.Unix域协议
+	利用socket编程接口来实现本地进程间通信
+	Unix域协议套接字：
+		SOCK_STREAM  =》tcp  面向字节流
+		SOCK_DGRAM   =》udp  面向数据报
+	
+	
+	其编程接口及流程同ipv4协议族一样，只不过协议地址
+		Unix域协议的地址结构体：<sys/un.h>
+		
+		struct sockaddr_un
+		{
+			sa_family_t sun_family;//协议族  AF_LOCAL / AF_UNIX
+			char sun_path[108];// Unix域协议的地址 ：是'\0'结束的本地文件系统中的绝对路径名   /home/gec/xxx
+		};
+		
+		
+	以UDP为列子	
+	
+	UDP :一发一收
+	TCP ：收发
+	
+	
+11.套接字选项  socket options
+	每个套接字在不同的协议层层次（级别）上有不同的行为属性（选项）
+	
+	getsockopt :获取套接字的选项值
+	setsockopt  :设置套接字的选项值
+		
+		
+		NAME
+       getsockopt, setsockopt - get and set options on sockets
+
+SYNOPSIS
+       #include <sys/types.h>          /* See NOTES */
+       #include <sys/socket.h>
+
+       int getsockopt(int sockfd, int level, int optname,
+                      void *optval, socklen_t *optlen);
+       int setsockopt(int sockfd, int level, int optname,
+                      const void *optval, socklen_t optlen);
+					  
+			sockfd：套接字描述符
+			level：级别  不同的选项在不同的级别上
+			optname:选项名
+			optval：指针
+					(get)  用来保存选项值
+					(set)  用来设置选项的值
+					
+			optlen：(get)  指针
+						用来保存选项值的长度
+								NOTE：在调用之前保存optval指向的内存的长度
+					(set)  变量
+							用来指定设定的选项值的长度
+			
+			返回值：成功返回0
+					失败返回-1，同时errno被设置
+					
+		eg:
+			设置套接字选项，允许地址和端口号重用
+					选项名：SO_REUSEADDR/SO_REUSEPORT
+					
+					级别：SOL_SOCKET
+					值得类型：int
+					
+			 int a = 1;
+			 int r = setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR,&a,sizeof(a));
+
+			
+			//获取
+			 int g;
+			 socklen_t len = sizeof(g);
+			 int getsockopt(sockfd,SOL_SOCKET, SO_REUSEADDR,&g, &len);
+			
+			
+12.广播和组播
+	（1）广播  boardcast  
+			是向同一网络的所有主机传输数据的方法
+			
+		只有传输层协议为UDP协议的时候，才支持广播功能
+			why?  TCP 是端对端   广播 是一对多
+			
+		广播地址：
+			子网内广播地址 ：xxx.xxx.xxx.255  (主机号为1)
+			
+				ip :		192.168.0.123
+				netmask（子网掩码） ：255.255.255.0
+				
+				在这ip的局域网的广播地址为 ：192.168.0.255
+				
+				
+			your ip :192.168.32.156
+			netmask :255.255.0.0
+			在这ip的局域网的广播地址为:192.168.255.255
+			
+			
+			your ip :192.168.32.156
+			netmask :255.255.128.0
+			在这ip的局域网的广播地址为:192.168.127.255
+			
+	全网广播地址：255.255.255.255
+			=》网络瘫痪
+			
+			
+	广播的编程思路（广播发送者，广播接收者）
+		如图 
+	
+注意：
+		谁要广播数据 谁就使用setsockopt函数  ，第四个参数设置为1
+		取消广播   就使用setsockopt函数  ，第四个参数设置为0
+		
+		想要接收到广播的信号，必须在广播域里面 ，端口号必须是同一个
+		
+	eg:
+		192.168.31.171 发送广播包让192.168.3.123 收到。只要设置192.168.31.171的子网掩码为255.255.0.0
+		然后在使用它的广播地址为192.168.255.255
+		
+	
+		ifconfig  eth0 192.168.31.123  netmask 255.255.255.0 up
+		
+		
+13.多播（组播）  Multicast
+	多播数据同时传输到加入到特定的组的大量主机
+	先加入多播组
+	
+	
+	多播也只有传输层协议为UDP，才支持
+	多播地址 ipv4 D类地址
+		D  1 1 1 0 多播组号（28bits）   224.0.0.0 ~ 239.255.255.255 
+		
+	多播一种折中的方式，只有加入到多播组的主机才能收到数据
+	
+	多播的编程思路（多播发送者，多播接收者）
+	
+	
+	加入到多播组  
+	
+	<netinet/in.h>
+		struct in_addr
+		{
+			in_addr_t s_addr;
+		};
+		struct ip_mreq    //为了可移植性，定义成私有数据类型
+		{
+			struct in_addr imr_multiaddr;//多播组地址   =》QQ群号
+			struct in_addr imr_interface;//（网卡）接口网址，多播数据报实际走哪块网卡   =》QQ号
+		};
+		
+		
+		struct ip_mreq  mreq;
+		bzero(&mreq,sizeof(mreq));
+		
+		mreq.imr_multiaddr.s_addr = inet_addr("224.1.1.1");
+		mreq.imr_interface.s_addr = inet_addr("192.168.31.171");
+		
+		//or
+		mreq.imr_interface.s_addr = htonl(INADDR_ANY);
+		
+		int r = setsockopt(client_fd, IPPROTO_IP, IP_ADD_MEMBERSHIP,&mreq,sizeof(mreq));
+	
+		 
+		
+		
+		
+		
+	
