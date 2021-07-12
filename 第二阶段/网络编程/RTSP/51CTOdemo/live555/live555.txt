@@ -1,0 +1,7 @@
+$ tar –xf live555-latest.tar.gz
+$ cd live
+
+# 交叉编译使用armlinux，需要自行修改工具链。
+# 使用gcc高版本时，-Wno-deprecated 标志添加到 CPLUSPLUS_FLAGS
+$ ./genMakefiles linux
+$ make

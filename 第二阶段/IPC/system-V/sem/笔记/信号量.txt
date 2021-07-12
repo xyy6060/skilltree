@@ -281,7 +281,7 @@ SYNOPSIS
 											//如果IPC_NOWAIT被设置立即出错并且errno被设置为 EAGAIN
 									
            short          sem_flg;  /*操作标志*/
-							// 0  默认  zuse
+							// 0  默认  阻塞
 							IPC_NOWAIT   非阻塞，不等待
 								假如是P操作，能获取则获取，不能获取返回-1
 								
